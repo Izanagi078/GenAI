@@ -1,43 +1,17 @@
 import fitz
-from toughness import get_top_tough_words
+import re
 
-def extract_paragraphs_from_pdf(filepath):
-    doc = fitz.open(filepath)
-    paragraphs = []
+def extract_pdf_text(path):
+    doc = fitz.open(path)
+    return [page.get_text() for page in doc]
 
-    for page in doc:
+def extract_abbreviations(pages):
+    pattern = r'\b[A-Z]{2,}(?:-[A-Z]+)?\b'  # Matches AI, CNN, NLP, or ISO-IEC
+    abbrevs = set()
 
-        text = page.get_text("text")
+    for page in pages:
+        # Optional: remove headers/footers if needed
+        matches = re.findall(pattern, page)
+        abbrevs.update(matches)
 
-
-        lines = text.split('\n')
-        buffer = ""
-
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue 
-
-            buffer += " " + line
-
-
-            if line.endswith('.'):
-                paragraphs.append(buffer.strip())
-                buffer = "" 
-
-
-        if buffer:
-            paragraphs.append(buffer.strip())
-
-    return paragraphs
-
-
-
-def analyze_pdf(filepath):
-    paragraphs = extract_paragraphs_from_pdf(filepath)
-    for i, para in enumerate(paragraphs):
-        tough_words = get_top_tough_words(para)
-        print(f"\nParagraph {i+1}:\n{para}\nTop 3 tough words: {tough_words}")
-
-if __name__ == "__main__":
-    analyze_pdf("uploads/TestFile.pdf")
+    return sorted(abbrevs)

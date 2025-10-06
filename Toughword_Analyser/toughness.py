@@ -1,36 +1,29 @@
-import re
-from wordfreq import word_frequency
-import nltk
+import os
+from dotenv import load_dotenv
+from langchain.chat_models import ChatOpenAI
+from langchain.chains import LLMChain
+from langchain.prompts import PromptTemplate
 
-# Ensure punkt and stopwords are downloaded
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt')
+# Load OpenAI API key from .env file
+load_dotenv()
+os.environ["OPENAI_API_KEY"]
 
-try:
-    nltk.data.find('corpora/stopwords')
-except LookupError:
-    nltk.download('stopwords')
+# Initialize GPT-4 model via LangChain
+llm = ChatOpenAI(model="gpt-4", temperature=0)
 
-from nltk.corpus import stopwords
-STOPWORDS = set(stopwords.words('english'))
+# Prompt template for resolving full forms
+prompt = PromptTemplate.from_template(
+    """Given the following document:\n{document}\nWhat does "{abbr}" stand for in this document?"""
+)
 
-def tokenize(text):
-    return [w.lower() for w in nltk.word_tokenize(text, preserve_line=True)
-            if re.match(r'\w+', w) and w.lower() not in STOPWORDS]
+# Create the chain
+chain = LLMChain(llm=llm, prompt=prompt)
 
-def toughness_score(word):
-    freq = word_frequency(word, 'en')
-    if freq == 0.0:
-        freq = 1e-9  # Avoid zero division
-    length = len(word)
-    score = (1 - freq) * length  # Composite metric
-    return score
-
-def get_top_tough_words(text, top_n=3):
-    words = tokenize(text)
-    unique_words = list(set(words))
-    scored = [(w, toughness_score(w)) for w in unique_words]
-    top = sorted(scored, key=lambda x: x[1], reverse=True)[:top_n]
-    return [w for w, _ in top]
+# Function to resolve full forms from abbreviations
+def resolve_full_forms(abbrevs, pages):
+    full_text = "\n".join(pages)
+    resolved = {}
+    for abbr in abbrevs:
+        answer = chain.run(document=full_text, abbr=abbr).strip()
+        resolved[abbr] = answer if answer else "Not found in document"
+    return resolved
