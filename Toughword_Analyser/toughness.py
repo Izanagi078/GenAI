@@ -1,15 +1,15 @@
 import os
 from dotenv import load_dotenv
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 
 # Load OpenAI API key from .env file
 load_dotenv()
-os.environ["OPENAI_API_KEY"]
+openai_api_key = os.getenv("OPENAI_API_KEY")
 
 # Initialize GPT-4 model via LangChain
-llm = ChatOpenAI(model="gpt-4", temperature=0)
+llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0, api_key=openai_api_key)
 
 # Prompt template for resolving full forms
 prompt = PromptTemplate.from_template(
@@ -23,7 +23,16 @@ chain = LLMChain(llm=llm, prompt=prompt)
 def resolve_full_forms(abbrevs, pages):
     full_text = "\n".join(pages)
     resolved = {}
+
+    if not abbrevs:
+        return resolved
+
     for abbr in abbrevs:
-        answer = chain.run(document=full_text, abbr=abbr).strip()
-        resolved[abbr] = answer if answer else "Not found in document"
+        print(f"Resolving: {abbr}")
+        try:
+            answer = chain.run(document=full_text, abbr=abbr).strip()
+            resolved[abbr] = answer if answer else "Not found in document"
+        except Exception as e:
+            resolved[abbr] = f"Error: {str(e)}"
+
     return resolved
