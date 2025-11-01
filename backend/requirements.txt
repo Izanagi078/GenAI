@@ -1,3 +1,9 @@
 PyMuPDF
 wordfreq
 nltk
+fastapi
+uvicorn[standard]
+python-dotenv
+langchain
+openai
+python-multipart
