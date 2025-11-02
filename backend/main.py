@@ -1,16 +1,14 @@
-import fitz
-from analyzer import find_references, find_paper_info
+"""Legacy shim - guidance for running the new FastAPI app.
 
-if __name__ == "__main__":
-    pdf_path = "uploads/twocolpaper.pdf"
-    doc = fitz.open(pdf_path)
-    
-    # Find all references
-    refs = find_references(doc)
-    
-    print(f"\nFound {len(refs)} references in {pdf_path}:\n")
-    for ref in refs:
-        print(f"\nReference {ref['text']:>5} | Page {ref['page']+1} | Column {ref['column']} | Block {ref['block']} | Line {ref['line']}")
-        print(f"Title: {find_paper_info(ref['number'])}\n")
-    
-    doc.close()
+The functionality of this script was migrated into the package-based API
+at `backend.app.main` (FastAPI). To run the web API, use uvicorn (from root dir):
+
+    uvicorn backend.app.main:app --reload
+
+If you need to run the original CLI-style flow, import and call the
+functions from `backend.services.parser` and `backend.services.pdf_transform`.
+"""
+
+from backend.app.main import app  # re-export the FastAPI app for uvicorn
+
+__all__ = ["app"]

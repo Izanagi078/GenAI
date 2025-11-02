@@ -2,31 +2,37 @@ import re
 from wordfreq import word_frequency
 import nltk
 
-# Ensure punkt and stopwords are downloaded
+#TODO: properly implement langchain here to find out toughwords
+
+
+# Ensure punkt and stopwords are available when the module is first imported
 try:
-    nltk.data.find('tokenizers/punkt')
+    nltk.data.find("tokenizers/punkt")
 except LookupError:
-    nltk.download('punkt')
+    nltk.download("punkt")
 
 try:
-    nltk.data.find('corpora/stopwords')
+    nltk.data.find("corpora/stopwords")
 except LookupError:
-    nltk.download('stopwords')
+    nltk.download("stopwords")
 
 from nltk.corpus import stopwords
-STOPWORDS = set(stopwords.words('english'))
+STOPWORDS = set(stopwords.words("english"))
+
 
 def tokenize(text):
     return [w.lower() for w in nltk.word_tokenize(text, preserve_line=True)
             if re.match(r'\w+', w) and w.lower() not in STOPWORDS]
 
+
 def toughness_score(word):
-    freq = word_frequency(word, 'en')
+    freq = word_frequency(word, "en")
     if freq == 0.0:
-        freq = 1e-9  # Avoid zero division
+        freq = 1e-9
     length = len(word)
-    score = (1 - freq) * length  # Composite metric
+    score = (1 - freq) * length
     return score
+
 
 def get_top_tough_words(text, top_n=3):
     words = tokenize(text)
