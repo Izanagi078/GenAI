@@ -3,7 +3,7 @@ import re
 from typing import List, Optional
 
 
-def find_references(doc: fitz.Document) -> List[dict]:
+def find_references(doc) -> List[dict]:
     """
     Find occurrences of references like "[n]" where n is any integer in a two-column research paper.
     Returns a list of reference dicts (same shape as original analyzer.py).

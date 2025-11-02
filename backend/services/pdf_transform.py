@@ -1,10 +1,10 @@
-import fitz
+import fitz  # PyMuPDF
 
 
-def get_page_content_bbox(page: fitz.Page, padding=0) -> fitz.Rect:
+def get_page_content_bbox(page, padding=0):
     blocks = page.get_text("blocks")
     if not blocks:
-        return page.cropbox
+        return page.cropbox  # Already a fitz.Rect
 
     x0, y0, x1, y1 = blocks[0][0:4]
     for b in blocks[1:]:
@@ -16,7 +16,7 @@ def get_page_content_bbox(page: fitz.Page, padding=0) -> fitz.Rect:
     return fitz.Rect(x0 - padding, y0, x1 + padding, y1)
 
 
-def scale_content_horizontally(doc: fitz.Document, scaling_factor: float) -> tuple[fitz.Document, list]:
+def scale_content_horizontally(doc, scaling_factor):
     new_doc = fitz.open()
     original_content_bboxes = []
 
@@ -41,7 +41,7 @@ def scale_content_horizontally(doc: fitz.Document, scaling_factor: float) -> tup
     return new_doc, original_content_bboxes
 
 
-def is_margin_space_occupied(page: fitz.Page, new_text_bbox: fitz.Rect, margin_area: fitz.Rect) -> bool:
+def is_margin_space_occupied(page, new_text_bbox, margin_area):
     existing_blocks = page.get_text("blocks")
 
     for block in existing_blocks:
@@ -52,7 +52,7 @@ def is_margin_space_occupied(page: fitz.Page, new_text_bbox: fitz.Rect, margin_a
     return False
 
 
-def add_definition_to_margin(doc: fitz.Document, scaling_factor: float, main_word: str, definition: str, original_location: dict, original_content_bboxes: list):
+def add_definition_to_margin(doc, scaling_factor, main_word, definition, original_location, original_content_bboxes):
     try:
         page_num = original_location["page"]
         page = doc[page_num]
@@ -86,19 +86,18 @@ def add_definition_to_margin(doc: fitz.Document, scaling_factor: float, main_wor
         temp_page = temp_doc.new_page(width=page.rect.width, height=page.rect.height)
         tw.write_text(temp_page)
         blocks = temp_page.get_text("blocks")
+        temp_doc.close()
 
         if not blocks:
             return
-        new_text_bbox = fitz.Rect(blocks[0][:4])
-        temp_doc.close()
 
-        # --- Collision Check ----
+        new_text_bbox = fitz.Rect(blocks[0][:4])
+
         if is_margin_space_occupied(page, new_text_bbox, margin_area_to_check):
             print(f"  -> Skipping '{main_word}' due to detected overlap.")
-            # TODO: Implement a better collision strategy, eg. shifting the new definition down until a free space is found
             return
 
-        page.insert_textbox(target_rect, full_text, fontsize=5, fontname="helv", color=(0.5, 0, 0))  #probably change color to grey using (0.2,0.2,0.2)
+        page.insert_textbox(target_rect, full_text, fontsize=5, fontname="helv", color=(0.2, 0.2, 0.2))  # grey tone
 
     except Exception as e:
         print(f"Error adding definition for '{main_word}': {e}")
