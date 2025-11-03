@@ -1,42 +1,15 @@
-import re
-from wordfreq import word_frequency
-import nltk
+from typing import List, Tuple, Set
 
-#TODO: properly implement langchain here to find out toughwords
-
-
-# Ensure punkt and stopwords are available when the module is first imported
-try:
-    nltk.data.find("tokenizers/punkt")
-except LookupError:
-    nltk.download("punkt")
-
-try:
-    nltk.data.find("corpora/stopwords")
-except LookupError:
-    nltk.download("stopwords")
-
-from nltk.corpus import stopwords
-STOPWORDS = set(stopwords.words("english"))
-
-
-def tokenize(text):
-    return [w.lower() for w in nltk.word_tokenize(text, preserve_line=True)
-            if re.match(r'\w+', w) and w.lower() not in STOPWORDS]
-
-
-def toughness_score(word):
-    freq = word_frequency(word, "en")
-    if freq == 0.0:
-        freq = 1e-9
-    length = len(word)
-    score = (1 - freq) * length
-    return score
-
-
-def get_top_tough_words(text, top_n=3):
-    words = tokenize(text)
-    unique_words = list(set(words))
-    scored = [(w, toughness_score(w)) for w in unique_words]
-    top = sorted(scored, key=lambda x: x[1], reverse=True)[:top_n]
-    return [w for w, _ in top]
+def extract_tough_words_from_page(page, known_vocab: Set[str]) -> List[Tuple[str, Tuple[float, float, float, float]]]:
+    """
+    Extract tough words and their bounding boxes from a page.
+    Returns list of (word, bbox).
+    Heuristic: words longer than 6 chars and not in known_vocab.
+    """
+    words = page.get_text("words")  # [(x0, y0, x1, y1, word, block_no, line_no, word_no)]
+    tough: List[Tuple[str, Tuple[float, float, float, float]]] = []
+    for x0, y0, x1, y1, w, *_ in words:
+        lw = w.lower()
+        if lw not in known_vocab and len(w) > 6:
+            tough.append((w, (x0, y0, x1, y1)))
+    return tough
