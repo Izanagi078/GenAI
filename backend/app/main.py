@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from pathlib import Path
 import shutil
 import time
+from .config import GOOGLE_API_KEY
 
 from backend.services import parser, pdf_transform, definitions
 from backend.models.schemas import AnnotateResponse
@@ -33,10 +34,11 @@ async def annotate(file: UploadFile = File(...), scaling: float = 0.9):
         scaled_doc, original_bboxes = pdf_transform.scale_content_horizontally(original_doc, scaling)
 
         refs = parser.find_references(original_doc)
+        g_key= GOOGLE_API_KEY
 
         processed = 0
         for ref in refs:
-            title = definitions.get_definition_for_reference(ref, pdf_path=str(dest))
+            title = definitions.get_title_for_reference_langchain(ref, pdf_path=str(dest),google_api_key=g_key)
             if title:
                 location_data = {"page": ref["page"], "column": ref["column"], "bbox": ref["bbox"]}
                 pdf_transform.add_definition_to_margin(
