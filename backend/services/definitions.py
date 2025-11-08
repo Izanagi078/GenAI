@@ -7,6 +7,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
+from langchain_groq import ChatGroq
 import traceback
 import os
 
@@ -34,15 +35,22 @@ def get_title_for_reference_langchain(ref: dict, pdf_path: str, google_api_key: 
                 for doc in docs:
                     content = doc.page_content
                     if "References" in content or "Bibliography" in content or found_references:
+                        print("references section found in the paper")
                         reference_docs.append(doc)
                         found_references = True
+                    elif found_references:
+                        # Continue adding pages until we hit a new section
+                        if not any(section in content.lower() for section in ["appendix", "acknowledg", "credit authorship"]):
+                            reference_docs.append(doc)
+                        else:
+                            break
                 
                 if not reference_docs:
-                    reference_docs = docs
+                    reference_docs = docs[-3:]
 
                 splitter = RecursiveCharacterTextSplitter(
-                    chunk_size=500,
-                    chunk_overlap=50,
+                    chunk_size=1000,
+                    chunk_overlap=200,
                     separators=["\n\n", "\n", ". ", " ", ""]
                 )
                 chunks = splitter.split_documents(reference_docs)
@@ -62,7 +70,7 @@ def get_title_for_reference_langchain(ref: dict, pdf_path: str, google_api_key: 
                         vectorstore = FAISS.load_local(
                             vectorstore_path, 
                             embeddings,
-                            allow_dangerous_deserialization=True
+                            allow_dangerous_deserialization=True         #make it false if in prod (for user uploads) and use alternative deserialization
                         )
                     else:
                         print("No existing vector store found. Creating a new one...")
@@ -105,22 +113,26 @@ def get_title_for_reference_langchain(ref: dict, pdf_path: str, google_api_key: 
                 
                 def format_docs(docs):
                     return "\n\n".join(doc.page_content for doc in docs)
-                
-                rag_chain = (
-                    {
-                        "context": (lambda x: f"citation for reference number {x}") | retriever | format_docs,
-                        "n": RunnablePassthrough(),
-                    }
-                    | prompt
-                    | llm
-                    | StrOutputParser()
-                )
-                
-                response = rag_chain.invoke(n)
+
+                query_str = f"Full bibliographic reference entry for citation [{n}], including [{n}] authors, title, journal name, year, and publication details."
+
+                retrieved_docs = retriever.invoke(query_str)
+
+                print("\n--- Retrieved Chunks ---")
+                for i, doc in enumerate(retrieved_docs):
+                    print(f"\nChunk {i+1}:\n{doc.page_content}\n")
+
+                formatted_context = format_docs(retrieved_docs)
+
+                inputs = {
+                    "context": formatted_context,
+                    "n": str(n)
+                }
+                response = (prompt | llm | StrOutputParser()).invoke(inputs)
                 response = response.strip()
                 
                 if not response or "NOT_FOUND" in response.upper() or "cannot find" in response.lower():
-                    return None
+                    return "NOT_FOUND"
                 
                 cleanup_phrases = [
                     "The full citation text for reference",
@@ -133,7 +145,7 @@ def get_title_for_reference_langchain(ref: dict, pdf_path: str, google_api_key: 
                     if response.startswith(phrase):
                         response = response[len(phrase):].strip()
                 
-                return response if response else None
+                return response if response else "NOT_FOUND"
             
             except Exception as e:
                 print(f"Error in get_title_for_reference_langchain: {e}")
@@ -145,3 +157,261 @@ def get_title_for_reference_langchain(ref: dict, pdf_path: str, google_api_key: 
         pass
     
     return None
+
+def find_answer(pdf_path: str, query: str, google_api_key: Optional[str] = None) -> str:
+    """
+    Finds an answer to a query within a PDF document using a RAG pipeline.
+    """
+    try:
+        api_key = google_api_key
+        if not api_key:
+            return "Error: Google API key not provided."
+
+        # Load the PDF
+        loader = PyMuPDFLoader(pdf_path)
+        docs = loader.load()
+        if not docs:
+            return "Could not load the document."
+
+        # Split the document into chunks
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200,
+            separators=["\n\n", "\n", ". ", " ", ""]
+        )
+        chunks = splitter.split_documents(docs)
+        if not chunks:
+            return "Could not split the document into chunks."
+
+        # Create or load the vector store
+        vectorstore_path = f"{pdf_path}.faiss"
+        embeddings = HuggingFaceEmbeddings(
+            model_name="all-MiniLM-L6-v2",
+            model_kwargs={'device': 'cpu'}
+        )
+        
+        try:
+            if os.path.exists(vectorstore_path):
+                vectorstore = FAISS.load_local(
+                    vectorstore_path, 
+                    embeddings,
+                    allow_dangerous_deserialization=True
+                )
+            else:
+                vectorstore = FAISS.from_documents(chunks, embeddings)
+                vectorstore.save_local(vectorstore_path)
+        except Exception as e:
+            # If loading fails, recreate from scratch
+            vectorstore = FAISS.from_documents(chunks, embeddings)
+            vectorstore.save_local(vectorstore_path)
+
+
+        # Create the retriever
+        retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
+
+        # Define the prompt template
+        template = """
+        Answer the following question based only on the provided context.
+        If the context does not contain the answer, respond with "This PDF does not have the answer to this question."
+
+        Context:
+        {context}
+
+        Question:
+        {question}
+
+        Answer:
+        """
+        prompt = ChatPromptTemplate.from_template(template)
+
+        # Initialize the language model
+        llm = ChatGoogleGenerativeAI(
+            model="gemini-2.5-flash",
+            google_api_key=api_key,
+            temperature=0,
+            convert_system_message_to_human=True
+        )
+
+        def format_docs(docs):
+            return "\n\n".join(doc.page_content for doc in docs)
+
+        # Create the RAG chain
+        rag_chain = (
+            {
+                "context": retriever | format_docs, 
+                "question": RunnablePassthrough()
+            }
+            | prompt
+            | llm
+            | StrOutputParser()
+        )
+
+        # Invoke the chain and get the response
+        response = rag_chain.invoke(query)
+        return response.strip()
+
+    except Exception as e:
+        traceback.print_exc()
+        return f"An error occurred: {e}"
+
+
+def extract_title_year_from_reference(reference_text: str, google_api_key: Optional[str] = None) -> Optional[dict]:
+    """
+    Extract title and year from a reference citation text using LLM.
+    """
+    try:
+        api_key = google_api_key
+        if not api_key:
+            print("Warning: No Google API key provided.")
+            return None
+
+        template = """Extract the title and publication year from this reference citation.
+
+Reference:
+{reference_text}
+
+Instructions:
+- Return ONLY the title and year in this exact format:
+Title: <exact title>
+Year: <year>
+
+- If title or year cannot be found, use "NOT_FOUND" for that field.
+- Do not include any other text or explanations."""
+
+        prompt = ChatPromptTemplate.from_template(template)
+
+        llm = ChatGroq(
+            model="moonshotai/kimi-k2-instruct-0905",
+            temperature=0,
+        )
+
+        response = (prompt | llm | StrOutputParser()).invoke({"reference_text": reference_text})
+        response = response.strip()
+
+        title = None
+        year = None
+
+        for line in response.split('\n'):
+            line = line.strip()
+            if line.startswith('Title:'):
+                title = line[6:].strip()
+            elif line.startswith('Year:'):
+                year = line[5:].strip()
+
+        if title and title != "NOT_FOUND":
+            title = title
+        else:
+            title = None
+
+        if year and year != "NOT_FOUND":
+            year = year
+        else:
+            year = None
+
+        if title or year:
+            return {"title": title, "year": year}
+        else:
+            return None
+
+    except Exception as e:
+        print(f"Error extracting title/year from reference: {e}")
+        return None
+
+
+def find_full_form(abbr: str,pdf_path: str, google_api_key: Optional[str] = None) -> str:
+    """
+    Finds full form of any abbreviation within a PDF document.
+    """
+    try:
+        api_key = google_api_key
+        if not api_key:
+            return "Error: Google API key not provided."
+
+        # Load the PDF
+        loader = PyMuPDFLoader(pdf_path)
+        docs = loader.load()
+        if not docs:
+            return "Could not load the document."
+
+        # Split the document into chunks
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200,
+            separators=["\n\n", "\n", ". ", " ", ""]
+        )
+        chunks = splitter.split_documents(docs)
+        if not chunks:
+            return "Could not split the document into chunks."
+
+        # Create or load the vector store
+        vectorstore_path = f"{pdf_path}.faiss"
+        embeddings = HuggingFaceEmbeddings(
+            model_name="all-MiniLM-L6-v2",
+            model_kwargs={'device': 'cpu'}  #cpu or cuda (for gpu)
+        )
+        
+        try:
+            if os.path.exists(vectorstore_path):
+                vectorstore = FAISS.load_local(
+                    vectorstore_path, 
+                    embeddings,
+                    allow_dangerous_deserialization=True
+                )
+            else:
+                vectorstore = FAISS.from_documents(chunks, embeddings)
+                vectorstore.save_local(vectorstore_path)
+        except Exception as e:
+            # If loading fails, recreate from scratch
+            vectorstore = FAISS.from_documents(chunks, embeddings)
+            vectorstore.save_local(vectorstore_path)
+
+
+        # Create the retriever
+        retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
+
+        # Define the prompt template
+        template = """
+        Your task is to find the full form for the abbreviation provided, using ONLY the context below.
+        Extract and return ONLY the full, unabbreviated text.
+        If the context does not contain the full form, respond with "This PDF does not have the full form of this abbreviation."
+
+        Context:
+        {context}
+
+        Abbreviation:
+        {abbreviation}
+
+        Full Form:
+        """
+        prompt = ChatPromptTemplate.from_template(template)
+
+        # Initialize the language model
+        llm = ChatGoogleGenerativeAI(
+            model="gemini-2.5-flash",
+            google_api_key=api_key,
+            temperature=0,
+            convert_system_message_to_human=True
+        )
+
+        def format_docs(docs):
+            return "\n\n".join(doc.page_content for doc in docs)
+
+        # Create the RAG chain
+        rag_chain = (
+            {
+                # Using a descriptive query for the retriever to better find the definition
+                "context": (lambda x: f"What is the full form or definition of {x['abbreviation']}?") | retriever | format_docs,
+                "abbreviation": lambda x: x['abbreviation']
+            }
+            | prompt
+            | llm
+            | StrOutputParser()
+        )
+
+        # Invoke the chain and get the response
+        response = rag_chain.invoke({"abbreviation": abbr})
+        return response.strip()
+
+    except Exception as e:
+        traceback.print_exc()
+        return f"An error occurred: {e}"
