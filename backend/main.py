@@ -5,8 +5,6 @@ at `backend.app.main` (FastAPI). To run the web API, use uvicorn (from root dir)
 
     uvicorn backend.app.main:app --reload
 
-If you need to run the original CLI-style flow, import and call the
-functions from `backend.services.parser` and `backend.services.pdf_transform`.
 """
 
 from backend.app.main import app  # re-export the FastAPI app for uvicorn

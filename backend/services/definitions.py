@@ -318,20 +318,20 @@ Year: <year>
         return None
 
 
-def find_full_form(abbr: str,pdf_path: str, google_api_key: Optional[str] = None) -> str:
+def find_full_form(abbr: str,pdf_path: str, google_api_key: Optional[str] = None) -> dict:
     """
     Finds full form of any abbreviation within a PDF document.
     """
     try:
         api_key = google_api_key
         if not api_key:
-            return "Error: Google API key not provided."
+            return {"ans": "Error: Google API key not provided.", "using_llm": False}
 
         # Load the PDF
         loader = PyMuPDFLoader(pdf_path)
         docs = loader.load()
         if not docs:
-            return "Could not load the document."
+            return {"ans": "Could not load the document.", "using_llm": False}
 
         # Split the document into chunks
         splitter = RecursiveCharacterTextSplitter(
@@ -341,7 +341,7 @@ def find_full_form(abbr: str,pdf_path: str, google_api_key: Optional[str] = None
         )
         chunks = splitter.split_documents(docs)
         if not chunks:
-            return "Could not split the document into chunks."
+            return {"ans": "Could not split the document into chunks.", "using_llm": False}
 
         # Create or load the vector store
         vectorstore_path = f"{pdf_path}.faiss"
@@ -367,13 +367,26 @@ def find_full_form(abbr: str,pdf_path: str, google_api_key: Optional[str] = None
 
 
         # Create the retriever
-        retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
+        retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
-        # Define the prompt template
-        template = """
+        # Initialize the language model
+        llm = ChatGroq(
+            model="moonshotai/kimi-k2-instruct-0905",
+            temperature=0,
+        )
+
+        def format_docs(docs):
+            return "\n\n".join(doc.page_content for doc in docs)
+
+        query_str = f"What is the full form or definition of {abbr}?"
+        retrieved_docs = retriever.invoke(query_str)
+        formatted_context = format_docs(retrieved_docs)
+
+        # First prompt: strict extraction
+        first_template = """
         Your task is to find the full form for the abbreviation provided, using ONLY the context below.
         Extract and return ONLY the full, unabbreviated text.
-        If the context does not contain the full form, respond with "This PDF does not have the full form of this abbreviation."
+        If the context does not contain the full form, respond with "NOT_FOUND"
 
         Context:
         {context}
@@ -383,35 +396,28 @@ def find_full_form(abbr: str,pdf_path: str, google_api_key: Optional[str] = None
 
         Full Form:
         """
-        prompt = ChatPromptTemplate.from_template(template)
+        first_prompt = ChatPromptTemplate.from_template(first_template)
+        first_response = (first_prompt | llm | StrOutputParser()).invoke({"context": formatted_context, "abbreviation": abbr})
 
-        # Initialize the language model
-        llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
-            google_api_key=api_key,
-            temperature=0,
-            convert_system_message_to_human=True
-        )
+        if first_response.strip() != "NOT_FOUND":
+            return {"ans": first_response.strip(), "using_llm": False}
+        else:
+            print("couldn't find full form inside paper, using search agent to find")
+            # Second prompt: infer suitable full form
+            second_template = """
+            Based on the provided context, provide a suitable full form or expansion for the abbreviation "{abbreviation}".
 
-        def format_docs(docs):
-            return "\n\n".join(doc.page_content for doc in docs)
+            If you can infer a reasonable full form from the context, it is not necessary that the full form will be in the context but you can use context to understand the topic/field/area in which you have to think to give the full form, provide it. Otherwise, respond with "NOT_FOUND".
 
-        # Create the RAG chain
-        rag_chain = (
-            {
-                # Using a descriptive query for the retriever to better find the definition
-                "context": (lambda x: f"What is the full form or definition of {x['abbreviation']}?") | retriever | format_docs,
-                "abbreviation": lambda x: x['abbreviation']
-            }
-            | prompt
-            | llm
-            | StrOutputParser()
-        )
+            Context:
+            {context}
 
-        # Invoke the chain and get the response
-        response = rag_chain.invoke({"abbreviation": abbr})
-        return response.strip()
+            Full Form:
+            """
+            second_prompt = ChatPromptTemplate.from_template(second_template)
+            second_response = (second_prompt | llm | StrOutputParser()).invoke({"context": formatted_context, "abbreviation": abbr})
+            return {"ans": second_response.strip(), "using_llm": True}
 
     except Exception as e:
         traceback.print_exc()
-        return f"An error occurred: {e}"
+        return {"ans": f"An error occurred: {e}", "using_llm": False}

@@ -31,12 +31,12 @@ async def annotate(file: UploadFile = File(...), scaling: float = 0.9, find_refe
 
         original_doc = fitz.open(str(dest))
 
-        # Build references database
-        refs_db = parser.build_references_db(original_doc, GOOGLE_API_KEY)
-
         # Scale to create margins
         scaled_doc, original_bboxes = pdf_transform.scale_content_horizontally(original_doc, scaling)
         if find_references:
+            # Build references database
+            refs_db = parser.build_references_db(original_doc, GOOGLE_API_KEY)
+
             refs = parser.find_references(original_doc)
 
             processed = 0
@@ -73,7 +73,7 @@ async def annotate(file: UploadFile = File(...), scaling: float = 0.9, find_refe
 
             # Find all full forms first to avoid processing duplicates
             full_form_map = {}
-            for abbr_text in list(unique_abbreviations)[:20]:  # Limit API calls
+            for abbr_text in list(unique_abbreviations):  # Limit API calls here if needed
                 print("API CALL for:", abbr_text)
                 full_form = definitions.find_full_form(
                     pdf_path=str(dest),
@@ -85,34 +85,58 @@ async def annotate(file: UploadFile = File(...), scaling: float = 0.9, find_refe
 
             # Track how many times each abbreviation has been seen
             abbr_occurrence_count = {}
+            # Track which pages we've already added a definition for, per abbreviation
+            # Structure: { abbr_text: set(pages) }
+            abbr_added_pages = {}
 
             # Now iterate through the original list to place annotations
             for abbr in abbs:
                 abbr_text = abbr["text"]
+                page = abbr.get("page")
                 abbr_occurrence_count[abbr_text] = abbr_occurrence_count.get(abbr_text, 0) + 1
 
-                # Add the definition ONLY when it appears for the second time
+                # Initialize the added-pages set for this abbreviation
+                if abbr_text not in abbr_added_pages:
+                    abbr_added_pages[abbr_text] = set()
+
+                # Skip the first occurrence entirely. Start adding on the second and subsequent occurrences.
+                # Also ensuring we only add once per page for a given abbreviation.
                 if (
-                    abbr_text in full_form_map and 
-                    abbr_occurrence_count[abbr_text] == 2  # second appearance
+                    abbr_text in full_form_map and
+                    abbr_occurrence_count[abbr_text] >= 2 and
+                    page not in abbr_added_pages[abbr_text]
                 ):
-                    full_form = full_form_map[abbr_text]
-                    
+                    definition = full_form_map[abbr_text].get("ans")
+
                     location_data = {
-                        "page": abbr["page"],
-                        "column": abbr["column"],
-                        "bbox": abbr["bbox"]
+                        "page": page,
+                        "column": abbr.get("column"),
+                        "bbox": abbr.get("bbox")
                     }
-                    pdf_transform.add_definition_to_margin(
-                        doc=scaled_doc,
-                        scaling_factor=scaling,
-                        main_word=abbr_text,
-                        definition=full_form,
-                        original_location=location_data,
-                        original_content_bboxes=original_bboxes,
-                    )
+
+                    using_llm = bool(full_form_map[abbr_text].get("using_llm"))
+                    if using_llm:
+                        pdf_transform.add_definition_to_margin(
+                            doc=scaled_doc,
+                            scaling_factor=scaling,
+                            main_word=abbr_text,
+                            definition=definition,
+                            original_location=location_data,
+                            original_content_bboxes=original_bboxes,
+                            using_llm=True,
+                        )
+                    else:
+                        pdf_transform.add_definition_to_margin(
+                            doc=scaled_doc,
+                            scaling_factor=scaling,
+                            main_word=abbr_text,
+                            definition=definition,
+                            original_location=location_data,
+                            original_content_bboxes=original_bboxes,
+                        )
 
                     processed += 1
+                    abbr_added_pages[abbr_text].add(page)
 
         out_path = UPLOAD_DIR / f"annotated_{timestamp}.pdf"
         scaled_doc.save(str(out_path))

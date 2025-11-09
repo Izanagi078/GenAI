@@ -52,7 +52,7 @@ def is_margin_space_occupied(page: fitz.Page, new_text_bbox: fitz.Rect, margin_a
     return False
 
 
-def add_definition_to_margin(doc: fitz.Document, scaling_factor: float, main_word: str, definition: str, original_location: dict, original_content_bboxes: list):
+def add_definition_to_margin(doc: fitz.Document, scaling_factor: float, main_word: str, definition: str, original_location: dict, original_content_bboxes: list,  using_llm: bool = False,):
     try:
         page_num = original_location["page"]
         page = doc[page_num]
@@ -97,8 +97,10 @@ def add_definition_to_margin(doc: fitz.Document, scaling_factor: float, main_wor
             print(f"  -> Skipping '{main_word}' due to detected overlap.")
             # TODO: Implement a better collision strategy, eg. shifting the new definition down until a free space is found
             return
-
-        page.insert_textbox(target_rect, full_text, fontsize=5, fontname="helv", color=(0.5, 0, 0))  #probably change color to grey using (0.2,0.2,0.2)
+        if using_llm:
+            page.insert_textbox(target_rect, full_text, fontsize=5, fontname="helv", color=(0, 0.5, 0))  #Green
+        else:
+            page.insert_textbox(target_rect, full_text, fontsize=5, fontname="helv", color=(0.5, 0, 0))  #probably change color to grey using (0.2,0.2,0.2)
 
     except Exception as e:
         print(f"Error adding definition for '{main_word}': {e}")
