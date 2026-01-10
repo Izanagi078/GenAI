@@ -12,6 +12,171 @@ import traceback
 import os
 
 
+def extract_title_year_from_reference(reference_text: str, google_api_key: Optional[str] = None) -> Optional[dict]:
+    """
+    Extract title and year from a reference citation text using LLM.
+    """
+    try:
+        api_key = google_api_key
+        if not api_key:
+            print("Warning: No Google API key provided.")
+            return None
+
+        template = """Extract the title and publication year from this reference citation.
+
+            Reference:
+            {reference_text}
+
+            Instructions:
+            - Return ONLY the title and year in this exact format:
+            Title: <exact title>
+            Year: <year>
+
+            - If title or year cannot be found, use "NOT_FOUND" for that field.
+            - Do not include any other text or explanations."""
+
+        prompt = ChatPromptTemplate.from_template(template)
+
+        llm = ChatGroq(
+            model="moonshotai/kimi-k2-instruct-0905",
+            temperature=0,
+        )
+
+        response = (prompt | llm | StrOutputParser()).invoke({"reference_text": reference_text})
+        response = response.strip()
+
+        title = None
+        year = None
+
+        for line in response.split('\n'):
+            line = line.strip()
+            if line.startswith('Title:'):
+                title = line[6:].strip()
+            elif line.startswith('Year:'):
+                year = line[5:].strip()
+
+        if title and title != "NOT_FOUND":
+            title = title
+        else:
+            title = None
+
+        if year and year != "NOT_FOUND":
+            year = year
+        else:
+            year = None
+
+        if title or year:
+            return {"title": title, "year": year}
+        else:
+            return None
+
+    except Exception as e:
+        print(f"Error extracting title/year from reference: {e}")
+        return None
+
+
+def find_full_form(abbr: str,pdf_path: str, google_api_key: Optional[str] = None) -> dict:
+    """
+    Finds full form of any abbreviation within a PDF document.
+    """
+    try:
+        api_key = google_api_key
+        if not api_key:
+            return {"ans": "Error: Google API key not provided.", "using_llm": False}
+
+        loader = PyMuPDFLoader(pdf_path)
+        docs = loader.load()
+        if not docs:
+            return {"ans": "Could not load the document.", "using_llm": False}
+
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200,
+            separators=["\n\n", "\n", ". ", " ", ""]
+        )
+        chunks = splitter.split_documents(docs)
+        if not chunks:
+            return {"ans": "Could not split the document into chunks.", "using_llm": False}
+
+        vectorstore_path = f"{pdf_path}.faiss"
+        embeddings = HuggingFaceEmbeddings(
+            model_name="all-MiniLM-L6-v2",
+            model_kwargs={'device': 'cpu'}  #cpu or cuda (for gpu)
+        )
+        
+        try:
+            if os.path.exists(vectorstore_path):
+                vectorstore = FAISS.load_local(
+                    vectorstore_path, 
+                    embeddings,
+                    allow_dangerous_deserialization=True
+                )
+            else:
+                vectorstore = FAISS.from_documents(chunks, embeddings)
+                vectorstore.save_local(vectorstore_path)
+        except Exception as e:
+            # If loading fails, recreate from scratch
+            vectorstore = FAISS.from_documents(chunks, embeddings)
+            vectorstore.save_local(vectorstore_path)
+
+
+        retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+
+        llm = ChatGroq(
+            model="moonshotai/kimi-k2-instruct-0905",
+            temperature=0,
+        )
+
+        def format_docs(docs):
+            return "\n\n".join(doc.page_content for doc in docs)
+
+        query_str = f"What is the full form or definition of {abbr}?"
+        retrieved_docs = retriever.invoke(query_str)
+        formatted_context = format_docs(retrieved_docs)
+
+        # First prompt: strict extraction
+        first_template = """
+        Your task is to find the full form for the abbreviation provided, using ONLY the context below.
+        Extract and return ONLY the full, unabbreviated text.
+        If the context does not contain the full form, respond with "NOT_FOUND"
+
+        Context:
+        {context}
+
+        Abbreviation:
+        {abbreviation}
+
+        Full Form:
+        """
+        first_prompt = ChatPromptTemplate.from_template(first_template)
+        first_response = (first_prompt | llm | StrOutputParser()).invoke({"context": formatted_context, "abbreviation": abbr})
+
+        if first_response.strip() != "NOT_FOUND":
+            return {"ans": first_response.strip(), "using_llm": False}
+        else:
+            print("couldn't find full form inside paper, using search agent to find")
+            # Second prompt: infer suitable full form
+            second_template = """
+            Based on the provided context, provide a suitable full form or expansion for the abbreviation "{abbreviation}".
+
+            If you can infer a reasonable full form from the context, it is not necessary that the full form will be in the context but you can use context to understand the topic/field/area in which you have to think to give the full form, provide it. 
+            Otherwise, respond with "NOT_FOUND". Try to avoid responding with "NOT_FOUND" as much as possible and give some possible full form.
+
+            Context:
+            {context}
+
+            Full Form:
+            """
+            second_prompt = ChatPromptTemplate.from_template(second_template)
+            second_response = (second_prompt | llm | StrOutputParser()).invoke({"context": formatted_context, "abbreviation": abbr})
+            return {"ans": second_response.strip(), "using_llm": True}
+
+    except Exception as e:
+        traceback.print_exc()
+        return {"ans": f"An error occurred: {e}", "using_llm": False}
+
+
+
 def get_title_for_reference_langchain(ref: dict, pdf_path: str, google_api_key: Optional[str] = None) -> Optional[str]:
     """
     Get the reference title using LangChain-based semantic search with Gemini.
@@ -158,6 +323,9 @@ def get_title_for_reference_langchain(ref: dict, pdf_path: str, google_api_key: 
     
     return None
 
+
+
+
 def find_answer(pdf_path: str, query: str, google_api_key: Optional[str] = None) -> str:
     """
     Finds an answer to a query within a PDF document using a RAG pipeline.
@@ -167,13 +335,11 @@ def find_answer(pdf_path: str, query: str, google_api_key: Optional[str] = None)
         if not api_key:
             return "Error: Google API key not provided."
 
-        # Load the PDF
         loader = PyMuPDFLoader(pdf_path)
         docs = loader.load()
         if not docs:
             return "Could not load the document."
 
-        # Split the document into chunks
         splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200,
@@ -183,7 +349,6 @@ def find_answer(pdf_path: str, query: str, google_api_key: Optional[str] = None)
         if not chunks:
             return "Could not split the document into chunks."
 
-        # Create or load the vector store
         vectorstore_path = f"{pdf_path}.faiss"
         embeddings = HuggingFaceEmbeddings(
             model_name="all-MiniLM-L6-v2",
@@ -206,10 +371,8 @@ def find_answer(pdf_path: str, query: str, google_api_key: Optional[str] = None)
             vectorstore.save_local(vectorstore_path)
 
 
-        # Create the retriever
         retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
 
-        # Define the prompt template
         template = """
         Answer the following question based only on the provided context.
         If the context does not contain the answer, respond with "This PDF does not have the answer to this question."
@@ -224,7 +387,6 @@ def find_answer(pdf_path: str, query: str, google_api_key: Optional[str] = None)
         """
         prompt = ChatPromptTemplate.from_template(template)
 
-        # Initialize the language model
         llm = ChatGoogleGenerativeAI(
             model="gemini-2.5-flash",
             google_api_key=api_key,
@@ -246,178 +408,9 @@ def find_answer(pdf_path: str, query: str, google_api_key: Optional[str] = None)
             | StrOutputParser()
         )
 
-        # Invoke the chain and get the response
         response = rag_chain.invoke(query)
         return response.strip()
 
     except Exception as e:
         traceback.print_exc()
         return f"An error occurred: {e}"
-
-
-def extract_title_year_from_reference(reference_text: str, google_api_key: Optional[str] = None) -> Optional[dict]:
-    """
-    Extract title and year from a reference citation text using LLM.
-    """
-    try:
-        api_key = google_api_key
-        if not api_key:
-            print("Warning: No Google API key provided.")
-            return None
-
-        template = """Extract the title and publication year from this reference citation.
-
-Reference:
-{reference_text}
-
-Instructions:
-- Return ONLY the title and year in this exact format:
-Title: <exact title>
-Year: <year>
-
-- If title or year cannot be found, use "NOT_FOUND" for that field.
-- Do not include any other text or explanations."""
-
-        prompt = ChatPromptTemplate.from_template(template)
-
-        llm = ChatGroq(
-            model="moonshotai/kimi-k2-instruct-0905",
-            temperature=0,
-        )
-
-        response = (prompt | llm | StrOutputParser()).invoke({"reference_text": reference_text})
-        response = response.strip()
-
-        title = None
-        year = None
-
-        for line in response.split('\n'):
-            line = line.strip()
-            if line.startswith('Title:'):
-                title = line[6:].strip()
-            elif line.startswith('Year:'):
-                year = line[5:].strip()
-
-        if title and title != "NOT_FOUND":
-            title = title
-        else:
-            title = None
-
-        if year and year != "NOT_FOUND":
-            year = year
-        else:
-            year = None
-
-        if title or year:
-            return {"title": title, "year": year}
-        else:
-            return None
-
-    except Exception as e:
-        print(f"Error extracting title/year from reference: {e}")
-        return None
-
-
-def find_full_form(abbr: str,pdf_path: str, google_api_key: Optional[str] = None) -> dict:
-    """
-    Finds full form of any abbreviation within a PDF document.
-    """
-    try:
-        api_key = google_api_key
-        if not api_key:
-            return {"ans": "Error: Google API key not provided.", "using_llm": False}
-
-        # Load the PDF
-        loader = PyMuPDFLoader(pdf_path)
-        docs = loader.load()
-        if not docs:
-            return {"ans": "Could not load the document.", "using_llm": False}
-
-        # Split the document into chunks
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200,
-            separators=["\n\n", "\n", ". ", " ", ""]
-        )
-        chunks = splitter.split_documents(docs)
-        if not chunks:
-            return {"ans": "Could not split the document into chunks.", "using_llm": False}
-
-        # Create or load the vector store
-        vectorstore_path = f"{pdf_path}.faiss"
-        embeddings = HuggingFaceEmbeddings(
-            model_name="all-MiniLM-L6-v2",
-            model_kwargs={'device': 'cpu'}  #cpu or cuda (for gpu)
-        )
-        
-        try:
-            if os.path.exists(vectorstore_path):
-                vectorstore = FAISS.load_local(
-                    vectorstore_path, 
-                    embeddings,
-                    allow_dangerous_deserialization=True
-                )
-            else:
-                vectorstore = FAISS.from_documents(chunks, embeddings)
-                vectorstore.save_local(vectorstore_path)
-        except Exception as e:
-            # If loading fails, recreate from scratch
-            vectorstore = FAISS.from_documents(chunks, embeddings)
-            vectorstore.save_local(vectorstore_path)
-
-
-        # Create the retriever
-        retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
-
-        # Initialize the language model
-        llm = ChatGroq(
-            model="moonshotai/kimi-k2-instruct-0905",
-            temperature=0,
-        )
-
-        def format_docs(docs):
-            return "\n\n".join(doc.page_content for doc in docs)
-
-        query_str = f"What is the full form or definition of {abbr}?"
-        retrieved_docs = retriever.invoke(query_str)
-        formatted_context = format_docs(retrieved_docs)
-
-        # First prompt: strict extraction
-        first_template = """
-        Your task is to find the full form for the abbreviation provided, using ONLY the context below.
-        Extract and return ONLY the full, unabbreviated text.
-        If the context does not contain the full form, respond with "NOT_FOUND"
-
-        Context:
-        {context}
-
-        Abbreviation:
-        {abbreviation}
-
-        Full Form:
-        """
-        first_prompt = ChatPromptTemplate.from_template(first_template)
-        first_response = (first_prompt | llm | StrOutputParser()).invoke({"context": formatted_context, "abbreviation": abbr})
-
-        if first_response.strip() != "NOT_FOUND":
-            return {"ans": first_response.strip(), "using_llm": False}
-        else:
-            print("couldn't find full form inside paper, using search agent to find")
-            # Second prompt: infer suitable full form
-            second_template = """
-            Based on the provided context, provide a suitable full form or expansion for the abbreviation "{abbreviation}".
-
-            If you can infer a reasonable full form from the context, it is not necessary that the full form will be in the context but you can use context to understand the topic/field/area in which you have to think to give the full form, provide it. Otherwise, respond with "NOT_FOUND".
-
-            Context:
-            {context}
-
-            Full Form:
-            """
-            second_prompt = ChatPromptTemplate.from_template(second_template)
-            second_response = (second_prompt | llm | StrOutputParser()).invoke({"context": formatted_context, "abbreviation": abbr})
-            return {"ans": second_response.strip(), "using_llm": True}
-
-    except Exception as e:
-        traceback.print_exc()
-        return {"ans": f"An error occurred: {e}", "using_llm": False}

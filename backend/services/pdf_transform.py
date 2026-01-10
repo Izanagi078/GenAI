@@ -17,26 +17,43 @@ def get_page_content_bbox(page: fitz.Page, padding=0) -> fitz.Rect:
 
 
 def scale_content_horizontally(doc: fitz.Document, scaling_factor: float) -> tuple[fitz.Document, list]:
+    """
+      - increase the page width by `scaling_factor`.
+      - Place original content unscaled and centered horizontally on the wider page.
+      - Return the new document and a list of the content bboxes adjusted to the new page coordinates.
+    """
+    if scaling_factor <= 0:
+        raise ValueError("scaling_factor must be positive.")
     new_doc = fitz.open()
     original_content_bboxes = []
 
     for source_page in doc:
+        src_w = source_page.rect.width
+        src_h = source_page.rect.height
+
+        # New (wider) page width
+        new_w = src_w * scaling_factor
+        new_h = src_h
+
+        # Center the original content horizontally on the new page
+        x_offset = (new_w - src_w) / 2.0
+        dest_rect = fitz.Rect(x_offset, 0, x_offset + src_w, src_h)
+
+        new_page = new_doc.new_page(width=new_w, height=new_h)
+
+        # Draw the original page into the destination rect WITHOUT scaling (show_pdf_page scales content to the dest_rect size).
+        # Since dest_rect has same size as original page, content is placed unscaled and just shifted by x_offset.
+        new_page.show_pdf_page(dest_rect, doc, source_page.number)
+
+        # Get content bbox from original page and shift it by x_offset to match new page coordinates
         content_bbox = get_page_content_bbox(source_page)
-        original_content_bboxes.append(content_bbox)
-
-        new_page = new_doc.new_page(width=source_page.rect.width, height=source_page.rect.height)
-        new_page.show_pdf_page(new_page.rect, doc, source_page.number)
-
-        sx = scaling_factor
-        content_center_x = content_bbox.x0 + content_bbox.width / 2
-        tx = content_center_x * (1 - sx)
-
-        transform_command = f"{sx} 0 0 1.0 {tx} 0 cm\n".encode("utf-8")
-
-        original_content = new_page.read_contents()
-        new_content = transform_command + original_content
-        content_xref = new_page.get_contents()[0]
-        new_doc.update_stream(content_xref, new_content)
+        shifted_bbox = fitz.Rect(
+            content_bbox.x0 + x_offset,
+            content_bbox.y0,
+            content_bbox.x1 + x_offset,
+            content_bbox.y1,
+        )
+        original_content_bboxes.append(shifted_bbox)
 
     return new_doc, original_content_bboxes
 
@@ -52,7 +69,15 @@ def is_margin_space_occupied(page: fitz.Page, new_text_bbox: fitz.Rect, margin_a
     return False
 
 
-def add_definition_to_margin(doc: fitz.Document, scaling_factor: float, main_word: str, definition: str, original_location: dict, original_content_bboxes: list,  using_llm: bool = False,):
+def add_definition_to_margin(
+    doc: fitz.Document,
+    scaling_factor: float,
+    main_word: str,
+    definition: str,
+    original_location: dict,
+    original_content_bboxes: list,
+    using_llm: bool = False,
+):
     try:
         page_num = original_location["page"]
         page = doc[page_num]
@@ -61,10 +86,10 @@ def add_definition_to_margin(doc: fitz.Document, scaling_factor: float, main_wor
         content_bbox = original_content_bboxes[page_num]
         content_center_x = content_bbox.x0 + content_bbox.width / 2
 
-        scaled_content_x0 = content_center_x + (content_bbox.x0 - content_center_x) * scaling_factor
-        scaled_content_x1 = content_center_x + (content_bbox.x1 - content_center_x) * scaling_factor
+        scaled_content_x0 = content_bbox.x0
+        scaled_content_x1 = content_bbox.x1
 
-        y_position = original_bbox.y0
+        y_position = original_bbox.y0 + 3  # Adjusted y_position slightly downwards
         padding = 5
 
         if original_location["column"] == 1:
@@ -88,6 +113,7 @@ def add_definition_to_margin(doc: fitz.Document, scaling_factor: float, main_wor
         blocks = temp_page.get_text("blocks")
 
         if not blocks:
+            temp_doc.close()
             return
         new_text_bbox = fitz.Rect(blocks[0][:4])
         temp_doc.close()
@@ -95,12 +121,12 @@ def add_definition_to_margin(doc: fitz.Document, scaling_factor: float, main_wor
         # --- Collision Check ----
         if is_margin_space_occupied(page, new_text_bbox, margin_area_to_check):
             print(f"  -> Skipping '{main_word}' due to detected overlap.")
-            # TODO: Implement a better collision strategy, eg. shifting the new definition down until a free space is found
+            # TODO: Implement a better collision strategy, e.g. shifting the new definition down until a free space is found
             return
         if using_llm:
-            page.insert_textbox(target_rect, full_text, fontsize=5, fontname="helv", color=(0, 0.5, 0))  #Green
+            page.insert_textbox(target_rect, full_text, fontsize=5, fontname="helv", color=(0, 0.5, 0))  # Green
         else:
-            page.insert_textbox(target_rect, full_text, fontsize=5, fontname="helv", color=(0.5, 0, 0))  #probably change color to grey using (0.2,0.2,0.2)
+            page.insert_textbox(target_rect, full_text, fontsize=5, fontname="helv", color=(0, 0, 0.5))  # Blue
 
     except Exception as e:
         print(f"Error adding definition for '{main_word}': {e}")

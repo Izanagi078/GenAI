@@ -5,6 +5,7 @@ import shutil
 import time
 from .config import GOOGLE_API_KEY
 from typing import Annotated
+import fitz
 
 from backend.services import parser, pdf_transform, definitions
 from backend.models.schemas import AnnotateResponse
@@ -16,7 +17,7 @@ app = FastAPI(title="PaperAnnotator")
 
 
 @app.post("/annotate/", response_model=AnnotateResponse)
-async def annotate(file: UploadFile = File(...), scaling: float = 0.9, find_references: bool = True, find_abbreviation: bool = True):
+async def annotate(file: UploadFile = File(...), scaling: float = 1.2, find_references: bool = True, find_abbreviation: bool = True):
     # Save the uploaded file
     timestamp = int(time.time())
     dest = UPLOAD_DIR / f"uploaded_{timestamp}.pdf"
@@ -27,8 +28,6 @@ async def annotate(file: UploadFile = File(...), scaling: float = 0.9, find_refe
         raise HTTPException(status_code=500, detail=f"Failed to save upload: {e}")
 
     try:
-        import fitz
-
         original_doc = fitz.open(str(dest))
 
         # Scale to create margins
@@ -56,7 +55,7 @@ async def annotate(file: UploadFile = File(...), scaling: float = 0.9, find_refe
                     pdf_transform.add_definition_to_margin(
                         doc=scaled_doc,
                         scaling_factor=scaling,
-                        main_word=f"Ref {ref['text']}",
+                        main_word=f"{ref['text']}",
                         definition=definition,
                         original_location=location_data,
                         original_content_bboxes=original_bboxes,
@@ -66,14 +65,23 @@ async def annotate(file: UploadFile = File(...), scaling: float = 0.9, find_refe
         if find_abbreviation:
             abbs = parser.find_abbreviations(original_doc)
 
-            processed = 0
-            # Using set to avoid duplicate lookups for the same abbreviation
-            unique_abbreviations = {abbr["text"] for abbr in abbs}
-            print("Unique abbreviations found:", len(unique_abbreviations))
+            # Calculate initial occurrence counts for all abbreviations
+            initial_abbr_counts = {}
+            for abbr in abbs:
+                abbr_text = abbr["text"]
+                initial_abbr_counts[abbr_text] = initial_abbr_counts.get(abbr_text, 0) + 1
 
-            # Find all full forms first to avoid processing duplicates
+            # Filter for unique abbreviations that appear at least twice
+            unique_abbreviations_for_lookup = {
+                abbr_text for abbr_text, count in initial_abbr_counts.items() if count >= 2
+            }
+            print("Unique abbreviations to lookup (appearing 2+ times):", len(unique_abbreviations_for_lookup))
+
+            processed = 0
+
+            # Find all full forms for abbreviations that occur at least twice
             full_form_map = {}
-            for abbr_text in list(unique_abbreviations):  # Limit API calls here if needed
+            for abbr_text in list(unique_abbreviations_for_lookup):
                 print("API CALL for:", abbr_text)
                 full_form = definitions.find_full_form(
                     pdf_path=str(dest),
@@ -83,7 +91,7 @@ async def annotate(file: UploadFile = File(...), scaling: float = 0.9, find_refe
                 if full_form:
                     full_form_map[abbr_text] = full_form
 
-            # Track how many times each abbreviation has been seen
+            # Track how many times each abbreviation has been seen during annotation processing
             abbr_occurrence_count = {}
             # Track which pages we've already added a definition for, per abbreviation
             # Structure: { abbr_text: set(pages) }
