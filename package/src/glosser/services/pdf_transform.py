@@ -16,7 +16,7 @@ def get_page_content_bbox(page: fitz.Page, padding=0) -> fitz.Rect:
     return fitz.Rect(x0 - padding, y0, x1 + padding, y1)
 
 
-def scale_content_horizontally(doc: fitz.Document, scaling_factor: float) -> tuple[fitz.Document, list]:
+def scale_content_horizontally(doc: fitz.Document, scaling_factor: float, progress_callback: callable = None) -> tuple[fitz.Document, list]:
     """
       - increase the page width by `scaling_factor`.
       - Place original content unscaled and centered horizontally on the wider page.
@@ -26,8 +26,11 @@ def scale_content_horizontally(doc: fitz.Document, scaling_factor: float) -> tup
         raise ValueError("scaling_factor must be positive.")
     new_doc = fitz.open()
     original_content_bboxes = []
+    num_pages = len(doc)
 
-    for source_page in doc:
+    for i, source_page in enumerate(doc):
+        if progress_callback:
+            progress_callback(i, num_pages)
         src_w = source_page.rect.width
         src_h = source_page.rect.height
 
@@ -78,55 +81,53 @@ def add_definition_to_margin(
     original_content_bboxes: list,
     using_llm: bool = False,
 ):
-    try:
-        page_num = original_location["page"]
-        page = doc[page_num]
+    page_num = original_location["page"]
+    page = doc[page_num]
 
-        original_bbox = fitz.Rect(original_location["bbox"])
-        content_bbox = original_content_bboxes[page_num]
-        content_center_x = content_bbox.x0 + content_bbox.width / 2
+    original_bbox = fitz.Rect(original_location["bbox"])
+    content_bbox = original_content_bboxes[page_num]
+    content_center_x = content_bbox.x0 + content_bbox.width / 2
 
-        scaled_content_x0 = content_bbox.x0
-        scaled_content_x1 = content_bbox.x1
+    scaled_content_x0 = content_bbox.x0
+    scaled_content_x1 = content_bbox.x1
 
-        y_position = original_bbox.y0 + 3  # Adjusted y_position slightly downwards
-        padding = 5
+    y_position = original_bbox.y0 + 3  # Adjusted y_position slightly downwards
+    padding = 5
 
-        if original_location["column"] == 1:
-            target_rect = fitz.Rect(padding, y_position, scaled_content_x0 - padding, page.rect.height - padding)
-            margin_area_to_check = fitz.Rect(0, 0, scaled_content_x0, page.rect.height)
-        elif original_location["column"] == 2:
-            target_rect = fitz.Rect(scaled_content_x1 + padding, y_position, page.rect.width - padding, page.rect.height - padding)
-            margin_area_to_check = fitz.Rect(scaled_content_x1, 0, page.rect.width, page.rect.height)
-        else:
-            return
+    if original_location["column"] == 1:
+        target_rect = fitz.Rect(padding, y_position, scaled_content_x0 - padding, page.rect.height - padding)
+        margin_area_to_check = fitz.Rect(0, 0, scaled_content_x0, page.rect.height)
+    elif original_location["column"] == 2:
+        target_rect = fitz.Rect(scaled_content_x1 + padding, y_position, page.rect.width - padding, page.rect.height - padding)
+        margin_area_to_check = fitz.Rect(scaled_content_x1, 0, page.rect.width, page.rect.height)
+    else:
+        return
 
-        clean_def = " ".join(definition.replace('\r', ' ').replace('\n', ' ').split())
-        full_text = f"{main_word}: {clean_def}"
+    clean_def = " ".join(definition.replace('\r', ' ').replace('\n', ' ').split())
+    full_text = f"{main_word}: {clean_def}"
 
-        tw = fitz.TextWriter(page.rect)
-        tw.fill_textbox(target_rect, full_text, fontsize=5)
+    tw = fitz.TextWriter(page.rect)
+    tw.fill_textbox(target_rect, full_text, fontsize=5)
 
-        temp_doc = fitz.open()
-        temp_page = temp_doc.new_page(width=page.rect.width, height=page.rect.height)
-        tw.write_text(temp_page)
-        blocks = temp_page.get_text("blocks")
+    temp_doc = fitz.open()
+    temp_page = temp_doc.new_page(width=page.rect.width, height=page.rect.height)
+    tw.write_text(temp_page)
+    blocks = temp_page.get_text("blocks")
 
-        if not blocks:
-            temp_doc.close()
-            return
-        new_text_bbox = fitz.Rect(blocks[0][:4])
+    if not blocks:
         temp_doc.close()
+        return
+    new_text_bbox = fitz.Rect(blocks[0][:4])
+    temp_doc.close()
 
-        # --- Collision Check ----
-        if is_margin_space_occupied(page, new_text_bbox, margin_area_to_check):
-            print(f"  -> Skipping '{main_word}' due to detected overlap.")
-            # TODO: Implement a better collision strategy, e.g. shifting the new definition down until a free space is found
-            return
-        if using_llm:
-            page.insert_textbox(target_rect, full_text, fontsize=5, fontname="helv", color=(0.5,0, 0))
-        else:
-            page.insert_textbox(target_rect, full_text, fontsize=5, fontname="helv", color=(0, 0.5, 0))  
+    # --- Collision Check ----
+    if is_margin_space_occupied(page, new_text_bbox, margin_area_to_check):
+        # TODO: Implement a better collision strategy, e.g. shifting the new definition down until a free space is found
+        return
+    if using_llm:
+        page.insert_textbox(target_rect, full_text, fontsize=5, fontname="helv", color=(0.5,0, 0))
+    else:
+        page.insert_textbox(target_rect, full_text, fontsize=5, fontname="helv", color=(0, 0.5, 0))  
 
-    except Exception as e:
-        print(f"Error adding definition for '{main_word}': {e}")
+    # except Exception as e:
+    #     print(f"Error adding definition for '{main_word}': {e}")

@@ -4,3 +4,5 @@ backend/__pycache__
 *__pycache__
 backend/uploads
 docs
+venv
+dist

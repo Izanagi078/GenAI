@@ -4,15 +4,18 @@ from typing import List, Optional, Dict
 from . import definitions
 
 
-def find_references(doc: fitz.Document) -> List[dict]:
+def find_references(doc: fitz.Document, progress_callback: Optional[callable] = None) -> List[dict]:
     """
     Find occurrences of references like "[n]" where n is any integer in a two-column research paper.
     Returns a list of reference dicts (same shape as original analyzer.py).
     """
     pattern = r'\[\s*(\d+)\s*\]'
     refs = []
+    num_pages = len(doc)
 
     for page_idx, page in enumerate(doc):
+        if progress_callback:
+            progress_callback(page_idx, num_pages)
         blocks = page.get_text("dict")["blocks"]
         page_width = page.rect.width
 
@@ -122,12 +125,13 @@ def find_paper_info(n: int, doc_path: str = "uploads/twocolpaper.pdf") -> Option
 
     return None
 
-def find_abbreviations(doc: fitz.Document) -> List[dict]:
+def find_abbreviations(doc: fitz.Document, progress_callback: Optional[callable] = None) -> List[dict]:
     """
     Finds all-uppercase abbreviations of at least 3 characters in the document.
 
     Args:
         doc: The PyMuPDF document object.
+        progress_callback: Optional callback for progress reporting.
 
     Returns:
         A list of dictionaries, where each dictionary represents a found
@@ -137,8 +141,11 @@ def find_abbreviations(doc: fitz.Document) -> List[dict]:
     # \b is a word boundary to ensure we don't match parts of other words.
     pattern = r'\b[A-Z]{3,5}\b'
     abbs = []
+    num_pages = len(doc)
 
     for page_idx, page in enumerate(doc):
+        if progress_callback:
+            progress_callback(page_idx, num_pages)
         # Extract text blocks with detailed structural information
         blocks = page.get_text("dict")["blocks"]
         page_width = page.rect.width
@@ -171,7 +178,7 @@ def find_abbreviations(doc: fitz.Document) -> List[dict]:
     return abbs
 
 
-def build_references_db(doc: fitz.Document, groq_api_key: Optional[str] = None) -> Dict[int, Dict[str, Optional[str]]]:
+def build_references_db(doc: fitz.Document, groq_api_key: Optional[str] = None, progress_callback: Optional[callable] = None) -> Dict[int, Dict[str, Optional[str]]]:
     """
     Build a database of references with their titles and years extracted from the references section.
     Scans the last two pages to find the references section, extracts individual reference texts,
@@ -179,7 +186,6 @@ def build_references_db(doc: fitz.Document, groq_api_key: Optional[str] = None) 
     """
     db = {}
 
-    # Get the last two pages
     num_pages = len(doc)
     pages_to_check = doc[-2:] if num_pages >= 2 else doc
 
@@ -202,24 +208,26 @@ def build_references_db(doc: fitz.Document, groq_api_key: Optional[str] = None) 
             references_content += text
 
     if not references_content:
-        print("No references section found in the last two pages.")
         return db
 
     # Regex to find individual references: [1] text until next [2] or end
     pattern = r'\[(\d+)\]\s*(.*?)(?=\[\d+\]|$)'
     matches = re.findall(pattern, references_content, re.DOTALL)
 
-    for number_str, ref_text in matches:
+    num_matches = len(matches)
+    for i, (number_str, ref_text) in enumerate(matches):
+        if progress_callback:
+            progress_callback(i, num_matches)
         number = int(number_str)
         ref_text = ref_text.strip()
         if ref_text:
-            print(f"Processing reference [{number}]: {ref_text[:100]}...")
             extracted = definitions.extract_title_year_from_reference(ref_text, groq_api_key)
             if extracted:
                 db[number] = extracted
-                print(f"Extracted for [{number}]: Title='{extracted.get('title')}', Year='{extracted.get('year')}'")
             else:
                 db[number] = {"title": None, "year": None}
-                print(f"Failed to extract for [{number}]")
+
+    if progress_callback:
+        progress_callback(num_matches, num_matches)
 
     return db

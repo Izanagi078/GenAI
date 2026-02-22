@@ -1,4 +1,20 @@
+import os
+import logging
+import traceback
+import warnings
 from typing import Optional
+
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+os.environ["ACCELERATE_LOG_LEVEL"] = "ERROR"
+
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
+
+for logger_name in ["transformers", "sentence_transformers", "langchain_huggingface", "accelerate"]:
+    logging.getLogger(logger_name).setLevel(logging.ERROR)
+
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -8,10 +24,69 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_groq import ChatGroq
-import traceback
-import os
+from transformers.utils import logging as transformers_logging
+
+transformers_logging.disable_progress_bar()
+
 from dotenv import load_dotenv
 load_dotenv()
+
+_cached_embeddings = None
+_cached_vectorstores = {}
+
+def get_embeddings():
+    global _cached_embeddings
+    if _cached_embeddings is None:
+        _cached_embeddings = HuggingFaceEmbeddings(
+            model_name="all-MiniLM-L6-v2",
+            model_kwargs={'device': 'cpu'}
+        )
+    return _cached_embeddings
+
+def get_vectorstore(pdf_path, groq_api_key):
+    """
+    Load or create a FAISS vector store for the given PDF.
+    Caches the vector store in memory for repeated lookups.
+    """
+    if pdf_path in _cached_vectorstores:
+        return _cached_vectorstores[pdf_path]
+
+    loader = PyMuPDFLoader(pdf_path)
+    docs = loader.load()
+    if not docs:
+        return None
+
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=200,
+        separators=["\n\n", "\n", ". ", " ", ""]
+    )
+    chunks = splitter.split_documents(docs)
+    if not chunks:
+        return None
+
+    vectorstore_path = f"{pdf_path}.faiss"
+    embeddings = get_embeddings()
+    
+    vectorstore = None
+    try:
+        if os.path.exists(vectorstore_path):
+            vectorstore = FAISS.load_local(
+                vectorstore_path, 
+                embeddings,
+                allow_dangerous_deserialization=True
+            )
+        else:
+            vectorstore = FAISS.from_documents(chunks, embeddings)
+            vectorstore.save_local(vectorstore_path)
+    except Exception:
+        # Recreate if loading fails
+        vectorstore = FAISS.from_documents(chunks, embeddings)
+        vectorstore.save_local(vectorstore_path)
+
+    if vectorstore:
+        _cached_vectorstores[pdf_path] = vectorstore
+    return vectorstore
 
 def extract_title_year_from_reference(reference_text: str, groq_api_key: Optional[str] = None) -> Optional[dict]:
     """
@@ -86,40 +161,9 @@ def find_full_form(abbr: str,pdf_path: str, groq_api_key: Optional[str] = None) 
         if not api_key:
             return {"ans": "Error: Google API key not provided.", "using_llm": False}
 
-        loader = PyMuPDFLoader(pdf_path)
-        docs = loader.load()
-        if not docs:
-            return {"ans": "Could not load the document.", "using_llm": False}
-
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200,
-            separators=["\n\n", "\n", ". ", " ", ""]
-        )
-        chunks = splitter.split_documents(docs)
-        if not chunks:
-            return {"ans": "Could not split the document into chunks.", "using_llm": False}
-
-        vectorstore_path = f"{pdf_path}.faiss"
-        embeddings = HuggingFaceEmbeddings(
-            model_name="all-MiniLM-L6-v2",
-            model_kwargs={'device': 'cpu'}  #cpu or cuda (for gpu)
-        )
-        
-        try:
-            if os.path.exists(vectorstore_path):
-                vectorstore = FAISS.load_local(
-                    vectorstore_path, 
-                    embeddings,
-                    allow_dangerous_deserialization=True
-                )
-            else:
-                vectorstore = FAISS.from_documents(chunks, embeddings)
-                vectorstore.save_local(vectorstore_path)
-        except Exception as e:
-            # If loading fails, recreate from scratch
-            vectorstore = FAISS.from_documents(chunks, embeddings)
-            vectorstore.save_local(vectorstore_path)
+        vectorstore = get_vectorstore(pdf_path, groq_api_key)
+        if not vectorstore:
+            return {"ans": "Error: Could not initialize vector store.", "using_llm": False}
 
 
         retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
@@ -157,7 +201,6 @@ def find_full_form(abbr: str,pdf_path: str, groq_api_key: Optional[str] = None) 
         if first_response.strip() != "NOT_FOUND":
             return {"ans": first_response.strip(), "using_llm": False}
         else:
-            print("couldn't find full form inside paper, using search agent to find")
             # Second prompt: infer suitable full form
             second_template = """
             Based on the provided context, provide a suitable full form or expansion for the abbreviation "{abbreviation}".
@@ -203,7 +246,6 @@ def get_title_for_reference_langchain(ref: dict, pdf_path: str, google_api_key: 
                 for doc in docs:
                     content = doc.page_content
                     if "References" in content or "Bibliography" in content or found_references:
-                        print("references section found in the paper")
                         reference_docs.append(doc)
                         found_references = True
                     elif found_references:
@@ -225,31 +267,9 @@ def get_title_for_reference_langchain(ref: dict, pdf_path: str, google_api_key: 
                 if not chunks:
                     return None
 
-                vectorstore_path = f"{pdf_path}.faiss"
-                
-                embeddings = HuggingFaceEmbeddings(
-                    model_name="all-MiniLM-L6-v2",
-                    model_kwargs={'device': 'cpu'}
-                )
-
-                try:
-                    if os.path.exists(vectorstore_path):
-                        print(f"Loading existing vector store from: {vectorstore_path}")
-                        vectorstore = FAISS.load_local(
-                            vectorstore_path, 
-                            embeddings,
-                            allow_dangerous_deserialization=True         #make it false if in prod (for user uploads) and use alternative deserialization
-                        )
-                    else:
-                        print("No existing vector store found. Creating a new one...")
-                        vectorstore = FAISS.from_documents(chunks, embeddings)
-                        print(f"Saving new vector store to: {vectorstore_path}")
-                        vectorstore.save_local(vectorstore_path)
-                except Exception as e:
-                    print(f"Error loading or creating vector store: {e}. Recreating from scratch...")
-                    vectorstore = FAISS.from_documents(chunks, embeddings)
-                    print(f"Saving new vector store to: {vectorstore_path}")
-                    vectorstore.save_local(vectorstore_path)
+                vectorstore = get_vectorstore(pdf_path, google_api_key)
+                if not vectorstore:
+                    return None
 
                 retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
                 
@@ -285,10 +305,6 @@ def get_title_for_reference_langchain(ref: dict, pdf_path: str, google_api_key: 
                 query_str = f"Full bibliographic reference entry for citation [{n}], including [{n}] authors, title, journal name, year, and publication details."
 
                 retrieved_docs = retriever.invoke(query_str)
-
-                print("\n--- Retrieved Chunks ---")
-                for i, doc in enumerate(retrieved_docs):
-                    print(f"\nChunk {i+1}:\n{doc.page_content}\n")
 
                 formatted_context = format_docs(retrieved_docs)
 
@@ -352,26 +368,9 @@ def find_answer(pdf_path: str, query: str, google_api_key: Optional[str] = None)
         if not chunks:
             return "Could not split the document into chunks."
 
-        vectorstore_path = f"{pdf_path}.faiss"
-        embeddings = HuggingFaceEmbeddings(
-            model_name="all-MiniLM-L6-v2",
-            model_kwargs={'device': 'cpu'}
-        )
-        
-        try:
-            if os.path.exists(vectorstore_path):
-                vectorstore = FAISS.load_local(
-                    vectorstore_path, 
-                    embeddings,
-                    allow_dangerous_deserialization=True
-                )
-            else:
-                vectorstore = FAISS.from_documents(chunks, embeddings)
-                vectorstore.save_local(vectorstore_path)
-        except Exception as e:
-            # If loading fails, recreate from scratch
-            vectorstore = FAISS.from_documents(chunks, embeddings)
-            vectorstore.save_local(vectorstore_path)
+        vectorstore = get_vectorstore(pdf_path, google_api_key)
+        if not vectorstore:
+            return "Error: Could not initialize vector store."
 
 
         retriever = vectorstore.as_retriever(search_kwargs={"k": 5})

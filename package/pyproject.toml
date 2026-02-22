@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "glosser"
+version = "0.0.2"
+dependencies = [
+    "PyMuPDF",
+    "langchain-core",
+    "langchain-community",
+    "langchain-text-splitters",
+    "langchain-google-genai",
+    "langchain-groq",
+    "langchain-huggingface",
+    "faiss-cpu",
+    "transformers",
+    "torch",
+    "sentence-transformers",
+    "rich",
+    "python-dotenv",
+    "accelerate",
+]
+authors = [
+  { name="Sunil Bishnoi", email="b23me1072@iitj.ac.in" },
+]
+description = "Automatically annotates research PDFs with citations and abbreviation expansions."
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Intended Audience :: Education",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+
+[project.scripts]
+glosser = "glosser.start:main"

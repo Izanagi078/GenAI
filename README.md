@@ -1,76 +1,118 @@
-# Paper Annotator
+<p align="center">
+  <h1 align="center">Glosser</h1>
+  <p align="center">
+    <strong>Automatically annotate research PDFs with citation titles and abbreviation expansions, right in the margins.</strong>
+  </p>
+  <p align="center">
+    <a href="https://pypi.org/project/glosser/"><img alt="PyPI" src="https://img.shields.io/pypi/v/glosser?color=FFD700&style=for-the-badge&logo=pypi&logoColor=white"></a>
+    <a href="https://pypi.org/project/glosser/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/glosser?color=3776AB&style=for-the-badge&logo=python&logoColor=white"></a>
+    <a href="https://opensource.org/licenses/MIT"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge"></a>
+  </p>
+</p>
 
-## Overview
+---
 
-**Paper Annotator** is a comprehensive tool designed to enhance the reading and analysis of research papers. By leveraging Generative AI and PDF processing libraries, it automatically annotates PDFs with helpful context—such as resolved references and abbreviation definitions—directly in the margins.
+## 🤔 What is Glosser?
 
-## Features
+Ever read a dense research paper and had to constantly flip to the references section just to see what **[17]** is? Or wondered what **LSTM** stands for on page 8?
 
-- **Smart PDF Annotation**: automatically allows for scaling of PDF pages to create side margins, preventing text overlap.
-- **Reference Resolution**: Detects citations (e.g., `[1]`) within the text, looks them up in the bibliography, and uses an LLM to extract and annotate the Title and Year in the margin.
-- **Abbreviation Expansion**: Identifies abbreviations, finds their definitions within the document using RAG (Retrieval-Augmented Generation), and annotates them.
+**Glosser** solves this. It reads your PDF, identifies every citation marker (like `[1]`, `[2]`, …) and every uppercase abbreviation, then writes their full titles and expansions **directly into the page margins**, producing a new, self-contained PDF you can read without jumping around.
 
-## Tech Stack
+### Before → After
 
-- **Backend Framework**: [FastAPI](https://fastapi.tiangolo.com/), Uvicorn
-- **PDF Processing**: [PyMuPDF (fitz)](https://pymupdf.readthedocs.io/)
-- **LLM & Orchestration**: [LangChain](https://www.langchain.com/), Google Generative AI (Gemini)
-- **Embeddings & Vector Store**: HuggingFace Embeddings, FAISS
-- **Language**: Python 3.x
+| Without Glosser | With Glosser |
+|:--- |:--- |
+| `...as shown in [14]...` | `...as shown in [14]...` **← margin: *"Attention Is All You Need (2017)"*** |
+| `...using the BERT model...` | `...using the BERT model...` **← margin: *"Bidirectional Encoder Representations from Transformers"*** |
 
-## Project Structure
+---
 
+## ✨ Key Features
+
+- 📄 **Citations in Margins**: Extracts titles and years from the bibliography using LLMs and places them exactly where they are cited.
+- 🔤 **Context-Aware Abbreviations**: Identifies abbreviations and finds their definitions within the document using an intelligent RAG (Retrieval-Augmented Generation) pipeline.
+- 🎨 **Visual Confidence**: Color-coded annotations (Green for high-confidence document matches, Red for LLM-inferred definitions).
+- ⚡ **Zero-Config CLI**: A simple interactive CLI that remembers your API keys and preferences.
+
+---
+
+## 🚀 Quick Start
+
+### Installation
+
+```bash
+pip install -q glosser
 ```
-GenAI/
-├── backend/
-│   ├── app/
-│   │   ├── main.py          # FastAPI application entry point
-│   │   └── config.py        # Configuration (API keys, etc.)
-│   ├── models/              # Pydantic models (Schemas)
-│   ├── services/            # Core logic
-│   │   ├── definitions.py   # RAG & LLM logic for definitions
-│   │   ├── parser.py        # Text parsing logic
-│   │   └── pdf_transform.py # PDF manipulation (scaling, annotation)
-│   └── requirements.txt     # Python dependencies
-├── docs/                    # Documentation & Plans
-├── uploads/                 # Temporary storage for uploads & indices
-└── README.md
+
+> **Note:** The `-q` flag keeps the install output clean. Glosser has ML dependencies (PyTorch, Transformers, FAISS) so the first install may take a few minutes.
+
+### Requirements
+
+- **Python**: 3.9 or higher
+- **API Key**: A free [Groq API key](https://console.groq.com/keys)
+
+---
+
+## 📖 How to Use
+
+### 1. Command Line Interface (CLI)
+The easiest way to use Glosser is the built-in interactive CLI, simply run:
+
+```bash
+glosser
+```
+Follow the prompts to select your PDF and set your preferences. Your Groq API key will be safely stored locally for future use.
+
+### 2. Python Library
+Integrate Glosser directly into your own automation scripts:
+
+```python
+import asyncio
+from glosser.main import annotate
+
+async def main():
+    out_path, count = await annotate(
+        path="my_paper.pdf",
+        GROQ_API_KEY="gsk_...",
+        scaling=1.2,               # margin width multiplier
+        find_references=True,      # toggle citation lookups
+        find_abbreviation=True,    # toggle abbreviation expansion
+    )
+    print(f"Success! Saved {count} annotations to: {out_path}")
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
-## Setup & Installation
+---
 
-1. **Clone the repository**:
+## ⚙️ Technical Architecture
 
-   ```bash
-   git clone <repository-url>
-   cd GenAI
-   ```
+Glosser transforms a standard PDF into an augmented reading experience through a multi-stage pipeline:
 
-2. **Install Dependencies**:
-   It is recommended to use a virtual environment.
+1. **Page Scaling**: Re-layouts the PDF to create a dedicated annotation column on the right.
+2. **Citation Mapping**: Parses the 'References' or 'Bibliography' section to map indices to titles.
+3. **Internal RAG**: 
+   - Chunks the PDF text.
+   - Generates vector embeddings (HuggingFace MiniLM).
+   - Performs similarity searches on abbreviations to find candidate definitions.
+4. **LLM Refinement**: Uses state-of-the-art LLMs (via Groq) to finalize the most accurate definitions and titles.
+5. **Annotation Layer**: Renders the final text onto the PDF using PyMuPDF.
 
-   ```bash
-   pip install -r backend/requirements.txt
-   ```
+---
 
-3. **Environment Setup**:
-   Create a `.env` file in the `backend/app` directory (or where `config.py` expects it) and add your Google API key:
-   ```env
-   GOOGLE_API_KEY=your_gemini_api_key
-   ```
+## 🛠️ Configuration & Customization
 
-## Usage
+| Variable | Default | Description |
+|---|---|---|
+| `scaling` | `1.2` | Page width multiplier. Increase for wider margins. |
+| `find_references` | `True` | Whether to process citation markers like `[12]`. |
+| `find_abbreviation` | `True` | Whether to use RAG to expand uppercase abbreviations. |
 
-1. **Run the Server**:
-   From the root directory of the project:
+Your preferences and API keys are stored at `~/.glosser_config`.
 
-   ```bash
-   uvicorn backend.app.main:app --reload
-   ```
+---
 
-2. **Access the API**:
-   Open your browser and navigate to the Swagger UI:
-   [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-
-3. **Endpoints**:
-   - **POST /annotate/**: Upload a PDF to receive an annotated version with references and abbreviations resolved in the margins.
+<p align="center">
+  Built with ❤️ for the research community.
+</p>
