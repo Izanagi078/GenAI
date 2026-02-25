@@ -1,7 +1,7 @@
-import fitz
+import pymupdf
 
 
-def get_page_content_bbox(page: fitz.Page, padding=0) -> fitz.Rect:
+def get_page_content_bbox(page: pymupdf.Page, padding=0) -> pymupdf.Rect:
     blocks = page.get_text("blocks")
     if not blocks:
         return page.cropbox
@@ -13,10 +13,10 @@ def get_page_content_bbox(page: fitz.Page, padding=0) -> fitz.Rect:
         x1 = max(x1, b[2])
         y1 = max(y1, b[3])
 
-    return fitz.Rect(x0 - padding, y0, x1 + padding, y1)
+    return pymupdf.Rect(x0 - padding, y0, x1 + padding, y1)
 
 
-def scale_content_horizontally(doc: fitz.Document, scaling_factor: float, progress_callback: callable = None) -> tuple[fitz.Document, list]:
+def scale_content_horizontally(doc: pymupdf.Document, scaling_factor: float, progress_callback: callable = None) -> tuple[pymupdf.Document, list]:
     """
       - increase the page width by `scaling_factor`.
       - Place original content unscaled and centered horizontally on the wider page.
@@ -24,7 +24,7 @@ def scale_content_horizontally(doc: fitz.Document, scaling_factor: float, progre
     """
     if scaling_factor <= 0:
         raise ValueError("scaling_factor must be positive.")
-    new_doc = fitz.open()
+    new_doc = pymupdf.open()
     original_content_bboxes = []
     num_pages = len(doc)
 
@@ -40,7 +40,7 @@ def scale_content_horizontally(doc: fitz.Document, scaling_factor: float, progre
 
         # Center the original content horizontally on the new page
         x_offset = (new_w - src_w) / 2.0
-        dest_rect = fitz.Rect(x_offset, 0, x_offset + src_w, src_h)
+        dest_rect = pymupdf.Rect(x_offset, 0, x_offset + src_w, src_h)
 
         new_page = new_doc.new_page(width=new_w, height=new_h)
 
@@ -50,7 +50,7 @@ def scale_content_horizontally(doc: fitz.Document, scaling_factor: float, progre
 
         # Get content bbox from original page and shift it by x_offset to match new page coordinates
         content_bbox = get_page_content_bbox(source_page)
-        shifted_bbox = fitz.Rect(
+        shifted_bbox = pymupdf.Rect(
             content_bbox.x0 + x_offset,
             content_bbox.y0,
             content_bbox.x1 + x_offset,
@@ -61,11 +61,11 @@ def scale_content_horizontally(doc: fitz.Document, scaling_factor: float, progre
     return new_doc, original_content_bboxes
 
 
-def is_margin_space_occupied(page: fitz.Page, new_text_bbox: fitz.Rect, margin_area: fitz.Rect) -> bool:
+def is_margin_space_occupied(page: pymupdf.Page, new_text_bbox: pymupdf.Rect, margin_area: pymupdf.Rect) -> bool:
     existing_blocks = page.get_text("blocks")
 
     for block in existing_blocks:
-        existing_bbox = fitz.Rect(block[:4])
+        existing_bbox = pymupdf.Rect(block[:4])
         if margin_area.contains(existing_bbox) and new_text_bbox.intersects(existing_bbox):
             return True
 
@@ -73,7 +73,7 @@ def is_margin_space_occupied(page: fitz.Page, new_text_bbox: fitz.Rect, margin_a
 
 
 def add_definition_to_margin(
-    doc: fitz.Document,
+    doc: pymupdf.Document,
     scaling_factor: float,
     main_word: str,
     definition: str,
@@ -84,32 +84,32 @@ def add_definition_to_margin(
     page_num = original_location["page"]
     page = doc[page_num]
 
-    original_bbox = fitz.Rect(original_location["bbox"])
+    original_bbox = pymupdf.Rect(original_location["bbox"])
     content_bbox = original_content_bboxes[page_num]
     content_center_x = content_bbox.x0 + content_bbox.width / 2
 
     scaled_content_x0 = content_bbox.x0
     scaled_content_x1 = content_bbox.x1
 
-    y_position = original_bbox.y0 + 3  # Adjusted y_position slightly downwards
+    y_position = original_bbox.y0 + 3
     padding = 5
 
     if original_location["column"] == 1:
-        target_rect = fitz.Rect(padding, y_position, scaled_content_x0 - padding, page.rect.height - padding)
-        margin_area_to_check = fitz.Rect(0, 0, scaled_content_x0, page.rect.height)
+        target_rect = pymupdf.Rect(padding, y_position, scaled_content_x0 - padding, page.rect.height - padding)
+        margin_area_to_check = pymupdf.Rect(0, 0, scaled_content_x0, page.rect.height)
     elif original_location["column"] == 2:
-        target_rect = fitz.Rect(scaled_content_x1 + padding, y_position, page.rect.width - padding, page.rect.height - padding)
-        margin_area_to_check = fitz.Rect(scaled_content_x1, 0, page.rect.width, page.rect.height)
+        target_rect = pymupdf.Rect(scaled_content_x1 + padding, y_position, page.rect.width - padding, page.rect.height - padding)
+        margin_area_to_check = pymupdf.Rect(scaled_content_x1, 0, page.rect.width, page.rect.height)
     else:
         return
 
     clean_def = " ".join(definition.replace('\r', ' ').replace('\n', ' ').split())
     full_text = f"{main_word}: {clean_def}"
 
-    tw = fitz.TextWriter(page.rect)
+    tw = pymupdf.TextWriter(page.rect)
     tw.fill_textbox(target_rect, full_text, fontsize=5)
 
-    temp_doc = fitz.open()
+    temp_doc = pymupdf.open()
     temp_page = temp_doc.new_page(width=page.rect.width, height=page.rect.height)
     tw.write_text(temp_page)
     blocks = temp_page.get_text("blocks")
@@ -117,7 +117,7 @@ def add_definition_to_margin(
     if not blocks:
         temp_doc.close()
         return
-    new_text_bbox = fitz.Rect(blocks[0][:4])
+    new_text_bbox = pymupdf.Rect(blocks[0][:4])
     temp_doc.close()
 
     # --- Collision Check ----

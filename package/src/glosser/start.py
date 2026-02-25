@@ -1,3 +1,9 @@
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+os.environ["GRPC_VERBOSITY"] = "ERROR"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 import asyncio
 import json
 from pathlib import Path

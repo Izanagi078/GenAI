@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "glosser"
-version = "0.0.2"
+version = "0.0.4"
 dependencies = [
     "PyMuPDF",
     "langchain-core",
@@ -14,15 +14,12 @@ dependencies = [
     "langchain-groq",
     "langchain-huggingface",
     "faiss-cpu",
-    "transformers",
-    "torch",
     "sentence-transformers",
     "rich",
     "python-dotenv",
-    "accelerate",
 ]
 authors = [
-  { name="Sunil Bishnoi", email="b23me1072@iitj.ac.in" },
+  { name = "Sunil Bishnoi", email = "b23me1072@iitj.ac.in" },
 ]
 description = "Automatically annotates research PDFs with citations and abbreviation expansions."
 readme = "README.md"

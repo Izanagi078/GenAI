@@ -1,10 +1,10 @@
-import fitz  # PyMuPDF
+import pymupdf
 import re
 from typing import List, Optional, Dict
 from . import definitions
 
 
-def find_references(doc: fitz.Document, progress_callback: Optional[callable] = None) -> List[dict]:
+def find_references(doc: pymupdf.Document, progress_callback: Optional[callable] = None) -> List[dict]:
     """
     Find occurrences of references like "[n]" where n is any integer in a two-column research paper.
     Returns a list of reference dicts (same shape as original analyzer.py).
@@ -90,7 +90,7 @@ def find_paper_info(n: int, doc_path: str = "uploads/twocolpaper.pdf") -> Option
     """
     Find the title of a paper referenced by number n in the References section of the PDF at doc_path.
     """
-    doc = fitz.open(doc_path)
+    doc = pymupdf.open(doc_path)
 
     references_page = None
     references_content = ""
@@ -125,7 +125,7 @@ def find_paper_info(n: int, doc_path: str = "uploads/twocolpaper.pdf") -> Option
 
     return None
 
-def find_abbreviations(doc: fitz.Document, progress_callback: Optional[callable] = None) -> List[dict]:
+def find_abbreviations(doc: pymupdf.Document, progress_callback: Optional[callable] = None) -> List[dict]:
     """
     Finds all-uppercase abbreviations of at least 3 characters in the document.
 
@@ -178,7 +178,7 @@ def find_abbreviations(doc: fitz.Document, progress_callback: Optional[callable]
     return abbs
 
 
-def build_references_db(doc: fitz.Document, groq_api_key: Optional[str] = None, progress_callback: Optional[callable] = None) -> Dict[int, Dict[str, Optional[str]]]:
+def build_references_db(doc: pymupdf.Document, groq_api_key: Optional[str] = None, progress_callback: Optional[callable] = None) -> Dict[int, Dict[str, Optional[str]]]:
     """
     Build a database of references with their titles and years extracted from the references section.
     Scans the last two pages to find the references section, extracts individual reference texts,

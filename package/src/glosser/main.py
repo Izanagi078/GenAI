@@ -1,5 +1,5 @@
 import time
-import fitz
+import pymupdf
 from pathlib import Path, PurePath
 from typing import Callable, Optional
 from .services import parser, pdf_transform, definitions
@@ -27,7 +27,7 @@ async def annotate(
     dest = PurePath(path)
     processed = 0
     try:
-        original_doc = fitz.open(str(dest))
+        original_doc = pymupdf.open(str(dest))
 
         scaled_doc, original_bboxes = pdf_transform.scale_content_horizontally(
             original_doc, 
