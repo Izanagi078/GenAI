@@ -17,6 +17,8 @@ dependencies = [
     "sentence-transformers",
     "rich",
     "python-dotenv",
+    "wordfreq",
+    "spacy",
 ]
 authors = [
   { name = "Sunil Bishnoi", email = "b23me1072@iitj.ac.in" },
