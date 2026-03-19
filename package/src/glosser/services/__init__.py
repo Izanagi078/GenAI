@@ -1,3 +1,3 @@
 """Service layer for package."""
 
-__all__ = ["parser", "pdf_transform", "tough_words", "definitions"]
+__all__ = ["parser", "pdf_transform", "definitions"]

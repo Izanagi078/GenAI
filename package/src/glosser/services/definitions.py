@@ -1,38 +1,91 @@
 import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+os.environ["GRPC_VERBOSITY"] = "ERROR"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+os.environ["TQDM_DISABLE"] = "1"
+os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+os.environ["VERBOSITY"] = "ERROR"
+
+import json
 import logging
 import traceback
 import warnings
-from typing import Optional
-
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-os.environ["TRANSFORMERS_VERBOSITY"] = "error"
-os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
-os.environ["ACCELERATE_LOG_LEVEL"] = "ERROR"
+import re
+from typing import Optional, List
 
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-for logger_name in ["transformers", "sentence_transformers", "langchain_huggingface", "accelerate"]:
+for logger_name in ["langchain_huggingface", "transformers", "huggingface_hub", "sentence_transformers", "urllib3"]:
     logging.getLogger(logger_name).setLevel(logging.ERROR)
+
+import transformers
+transformers.utils.logging.set_verbosity_error()
+try:
+    import transformers.models.bert.modeling_bert
+    logging.getLogger("transformers.models.bert.modeling_bert").setLevel(logging.ERROR)
+except ImportError:
+    pass
 
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.vectorstores import FAISS
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
+from langchain_core.runnables import RunnablePassthrough, Runnable
 from langchain_groq import ChatGroq
-from transformers.utils import logging as transformers_logging
-
-transformers_logging.disable_progress_bar()
-
+import ollama
 from dotenv import load_dotenv
 load_dotenv()
 
+class OllamaLLM(Runnable):
+    def __init__(self, model="qwen2.5:1.5b"):
+        self.model = model
+    def invoke(self, input_data, config=None):
+        msg = input_data.to_messages()[0].content if hasattr(input_data, 'to_messages') else str(input_data)
+        return ollama.chat(model=self.model, messages=[{'role': 'user', 'content': msg}]).message.content
+
 _cached_embeddings = None
 _cached_vectorstores = {}
+
+
+def _clean_reference_text(text: str) -> str:
+    text = re.sub(r"\s+", " ", text).strip()
+    text = re.sub(r"^\s*(?:\[\d+\]|\d+[\.]|\d+[\)])\s*", "", text)
+    return text
+
+
+def _extract_title_year_from_reference_regex(reference_text: str) -> dict:
+    cleaned = _clean_reference_text(reference_text)
+    year_match = re.search(r"\b((?:19|20)\d{2})(?:[a-z])?\b", cleaned, flags=re.IGNORECASE)
+    year = year_match.group(1) if year_match else None
+
+    title = None
+    if year_match:
+        tail = cleaned[year_match.end():]
+        tail = re.sub(r"^[\s\)\]\.\,:;\-]+", "", tail)
+        parts = [p.strip(" \t\n\r\"'") for p in re.split(r"\.\s+", tail) if p.strip()]
+        if parts:
+            title = parts[0]
+
+    if (not title or len(title) < 4) and cleaned:
+        parts = [p.strip(" \t\n\r\"'") for p in re.split(r"\.\s+", cleaned) if p.strip()]
+        if len(parts) >= 2 and year and year in parts[0]:
+            title = parts[1]
+        elif len(parts) >= 3:
+            title = parts[1]
+
+    if title:
+        title = re.sub(r"\s+", " ", title).strip(" .;:,-")
+        if len(title) < 4:
+            title = None
+
+    return {"title": title, "year": year}
 
 def get_embeddings():
     global _cached_embeddings
@@ -42,6 +95,17 @@ def get_embeddings():
             model_kwargs={'device': 'cpu'}
         )
     return _cached_embeddings
+
+def get_llm(use_local_llm: bool, groq_api_key: Optional[str] = None):
+    if use_local_llm:
+        return OllamaLLM()
+    if not groq_api_key:
+        return None
+    return ChatGroq(
+        model="moonshotai/kimi-k2-instruct-0905",
+        temperature=0,
+        api_key=groq_api_key,
+    )
 
 def get_vectorstore(pdf_path, groq_api_key):
     """
@@ -57,8 +121,8 @@ def get_vectorstore(pdf_path, groq_api_key):
         return None
 
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200,
+        chunk_size=500,
+        chunk_overlap=100,
         separators=["\n\n", "\n", ". ", " ", ""]
     )
     chunks = splitter.split_documents(docs)
@@ -88,331 +152,328 @@ def get_vectorstore(pdf_path, groq_api_key):
         _cached_vectorstores[pdf_path] = vectorstore
     return vectorstore
 
-def extract_title_year_from_reference(reference_text: str, groq_api_key: Optional[str] = None) -> Optional[dict]:
+def extract_title_year_from_reference(reference_text: str, groq_api_key: Optional[str] = None, target_author: Optional[str] = None, target_year: Optional[str] = None, use_local_llm: bool = False) -> Optional[dict]:
     """
     Extract title and year from a reference citation text using LLM.
     """
     try:
         api_key = groq_api_key
-        if not api_key:
-            print("Warning: No Google API key provided.")
-            return None
+        # Regex is too inaccurate for titles (often picks authors or journals).
+        fallback = _extract_title_year_from_reference_regex(reference_text)
+        
+        hint = ""
+        if target_author and target_year:
+            hint = f"Specifically for the reference authored by '{target_author}' in '{target_year}'."
 
-        template = """Extract the title and publication year from this reference citation.
+        template = f"""You are a precise bibliographic data extractor. Extract the main paper title and publication year from the given reference text.
+{hint}
 
-            Reference:
-            {reference_text}
+Instructions:
+1. Return ONLY a JSON object with "title" and "year" keys.
+2. The "title" should be the full, exact title of the paper/article.
+3. The "year" should be a 4-digit number (e.g., 2020).
+4. If a field is not found, use "NOT_FOUND".
+5. Do not include any citations, authors, or journal names in the title field.
 
-            Instructions:
-            - Return ONLY the title and year in this exact format:
-            Title: <exact title>
-            Year: <year>
+Reference:
+{{reference_text}}
 
-            - If title or year cannot be found, use "NOT_FOUND" for that field.
-            - Do not include any other text or explanations."""
+Response Format:
+{{{{ "title": "...", "year": "..." }}}}"""
 
         prompt = ChatPromptTemplate.from_template(template)
 
-        llm = ChatGroq(
-            model="moonshotai/kimi-k2-instruct-0905",
-            temperature=0,
-            api_key=groq_api_key,
-        )
+        llm = get_llm(use_local_llm, api_key)
+        
+        if not llm:
+            return fallback if fallback.get("title") or fallback.get("year") else None
 
         response = (prompt | llm | StrOutputParser()).invoke({"reference_text": reference_text})
         response = response.strip()
 
-        title = None
-        year = None
+        if response.startswith("```json"): response = response[7:]
+        elif response.startswith("```"): response = response[3:]
+        if response.endswith("```"): response = response[:-3]
 
-        for line in response.split('\n'):
-            line = line.strip()
-            if line.startswith('Title:'):
-                title = line[6:].strip()
-            elif line.startswith('Year:'):
-                year = line[5:].strip()
+        import json
+        try:
+            res_json = json.loads(response.strip())
+            title = res_json.get("title")
+            year = str(res_json.get("year"))
 
-        if title and title != "NOT_FOUND":
-            title = title
-        else:
-            title = None
+            if title == "NOT_FOUND": title = None
+            if year == "NOT_FOUND": year = None
 
-        if year and year != "NOT_FOUND":
-            year = year
-        else:
-            year = None
+            # Final cleanup
+            if not title: title = fallback.get("title")
+            if not year: year = fallback.get("year")
+            else:
+                y_match = re.search(r"\b((?:19|20)\d{2})\b", year)
+                year = y_match.group(1) if y_match else fallback.get("year")
 
-        if title or year:
-            return {"title": title, "year": year}
-        else:
-            return None
+            if title or year:
+                return {"title": title, "year": year}
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+        return fallback if fallback.get("title") or fallback.get("year") else None
 
     except Exception as e:
         print(f"Error extracting title/year from reference: {e}")
-        return None
+        fallback = _extract_title_year_from_reference_regex(reference_text)
+        return fallback if fallback.get("title") or fallback.get("year") else None
 
 
-def find_full_form(abbr: str,pdf_path: str, groq_api_key: Optional[str] = None) -> dict:
-    """
-    Finds full form of any abbreviation within a PDF document.
-    """
+def find_full_form(abbr: str, pdf_path: str, groq_api_key: Optional[str] = None, use_local_llm: bool = False) -> dict:
     try:
-        api_key = groq_api_key
-        if not api_key:
-            return {"ans": "Error: Google API key not provided.", "using_llm": False}
-
         vectorstore = get_vectorstore(pdf_path, groq_api_key)
         if not vectorstore:
             return {"ans": "Error: Could not initialize vector store.", "using_llm": False}
 
-
         retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+        docs = retriever.invoke(f"What is the full form or definition of {abbr}?")
+        context = "\n\n".join(d.page_content for d in docs)
 
-        llm = ChatGroq(
-            model="moonshotai/kimi-k2-instruct-0905",
-            temperature=0,
-            api_key=groq_api_key,
-        )
-
-        def format_docs(docs):
-            return "\n\n".join(doc.page_content for doc in docs)
-
-        query_str = f"What is the full form or definition of {abbr}?"
-        retrieved_docs = retriever.invoke(query_str)
-        formatted_context = format_docs(retrieved_docs)
-
-        # First prompt: strict extraction
-        first_template = """
-        Your task is to find the full form for the abbreviation provided, using ONLY the context below.
-        Extract and return ONLY the full, unabbreviated text.
-        If the context does not contain the full form, respond with "NOT_FOUND"
-
-        Context:
-        {context}
-
-        Abbreviation:
-        {abbreviation}
-
-        Full Form:
-        """
-        first_prompt = ChatPromptTemplate.from_template(first_template)
-        first_response = (first_prompt | llm | StrOutputParser()).invoke({"context": formatted_context, "abbreviation": abbr})
-
-        if first_response.strip() != "NOT_FOUND":
-            return {"ans": first_response.strip(), "using_llm": False}
-        else:
-            # Second prompt: infer suitable full form
-            second_template = """
-            Based on the provided context, provide a suitable full form or expansion for the abbreviation "{abbreviation}".
-
-            If you can infer a reasonable full form from the context, it is not necessary that the full form will be in the context but you can use context to understand the topic/field/area in which you have to think to give the full form, provide it. 
-            Otherwise, respond with "NOT_FOUND". Try to avoid responding with "NOT_FOUND" as much as possible and give some possible full form.
-
-            Context:
-            {context}
-
-            Full Form:
-            """
-            second_prompt = ChatPromptTemplate.from_template(second_template)
-            second_response = (second_prompt | llm | StrOutputParser()).invoke({"context": formatted_context, "abbreviation": abbr})
-            return {"ans": second_response.strip(), "using_llm": True}
-
-    except Exception as e:
-        traceback.print_exc()
-        return {"ans": f"An error occurred: {e}", "using_llm": False}
-
-
-
-def get_title_for_reference_langchain(ref: dict, pdf_path: str, google_api_key: Optional[str] = None) -> Optional[str]:
-    """
-    Get the reference title using LangChain-based semantic search with Gemini.
-    """
-    try:
-        n = ref.get("number")
-        if n:
-            try:
-                api_key = google_api_key 
-                if not api_key:
-                    print("Warning: No Google API key provided. Set GOOGLE_API_KEY...")
-                    return None
-
-                loader = PyMuPDFLoader(pdf_path)
-                docs = loader.load()
-                if not docs:
-                    return None
-
-                reference_docs = []
-                found_references = False
-                for doc in docs:
-                    content = doc.page_content
-                    if "References" in content or "Bibliography" in content or found_references:
-                        reference_docs.append(doc)
-                        found_references = True
-                    elif found_references:
-                        # Continue adding pages until we hit a new section
-                        if not any(section in content.lower() for section in ["appendix", "acknowledg", "credit authorship"]):
-                            reference_docs.append(doc)
-                        else:
-                            break
-                
-                if not reference_docs:
-                    reference_docs = docs[-3:]
-
-                splitter = RecursiveCharacterTextSplitter(
-                    chunk_size=1000,
-                    chunk_overlap=200,
-                    separators=["\n\n", "\n", ". ", " ", ""]
-                )
-                chunks = splitter.split_documents(reference_docs)
-                if not chunks:
-                    return None
-
-                vectorstore = get_vectorstore(pdf_path, google_api_key)
-                if not vectorstore:
-                    return None
-
-                retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
-                
-                template = """You are analyzing a References/Bibliography section of a research paper.
-                Your task is to locate reference number [{n}] in the provided context and extract ONLY the paper's TITLE from that reference.
-
-                Context from the paper:
-                {context}
-
-                Question: What is the paper title for reference [{n}]?
-
-                Instructions:
-                - Find reference number [{n}] in the formats [n], (n), or n.
-                - Return ONLY the paper title exactly as it appears in the citation text.
-                - Do NOT include authors, editors, journal or conference names, volume, pages, year, DOI, URLs, parentheses/brackets, the reference number, or any additional commentary.
-                - Do not add quotes, punctuation, or explanatory text—return the plain title string.
-                - If the citation contains a subtitle, include it as part of the title.
-                - If you cannot confidently find the title, respond with NOT_FOUND.
-
-                Answer:"""
-                prompt = ChatPromptTemplate.from_template(template)
-                
-                llm = ChatGoogleGenerativeAI(
-                    model="gemini-2.5-flash",
-                    google_api_key=api_key,
-                    temperature=0,
-                    convert_system_message_to_human=True
-                )
-                
-                def format_docs(docs):
-                    return "\n\n".join(doc.page_content for doc in docs)
-
-                query_str = f"Full bibliographic reference entry for citation [{n}], including [{n}] authors, title, journal name, year, and publication details."
-
-                retrieved_docs = retriever.invoke(query_str)
-
-                formatted_context = format_docs(retrieved_docs)
-
-                inputs = {
-                    "context": formatted_context,
-                    "n": str(n)
-                }
-                response = (prompt | llm | StrOutputParser()).invoke(inputs)
-                response = response.strip()
-                
-                if not response or "NOT_FOUND" in response.upper() or "cannot find" in response.lower():
-                    return "NOT_FOUND"
-                
-                cleanup_phrases = [
-                    "The full citation text for reference",
-                    f"Reference [{n}] is:",
-                    f"Reference {n} is:",
-                    "The citation is:",
-                    "Answer:",
-                ]
-                for phrase in cleanup_phrases:
-                    if response.startswith(phrase):
-                        response = response[len(phrase):].strip()
-                
-                return response if response else "NOT_FOUND"
-            
-            except Exception as e:
-                print(f"Error in get_title_for_reference_langchain: {e}")
-                traceback.print_exc()
-                return None
-
-    except Exception as e:
-        print(f"LangChain lookup failed: {e}")
-        pass
-    
-    return None
-
-
-
-
-def find_answer(pdf_path: str, query: str, google_api_key: Optional[str] = None) -> str:
-    """
-    Finds an answer to a query within a PDF document using a RAG pipeline.
-    """
-    try:
-        api_key = google_api_key
-        if not api_key:
-            return "Error: Google API key not provided."
-
-        loader = PyMuPDFLoader(pdf_path)
-        docs = loader.load()
-        if not docs:
-            return "Could not load the document."
-
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200,
-            separators=["\n\n", "\n", ". ", " ", ""]
-        )
-        chunks = splitter.split_documents(docs)
-        if not chunks:
-            return "Could not split the document into chunks."
-
-        vectorstore = get_vectorstore(pdf_path, google_api_key)
-        if not vectorstore:
-            return "Error: Could not initialize vector store."
-
-
-        retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
+        llm = get_llm(use_local_llm, groq_api_key)
+        if not llm:
+            return {"ans": "Error: LLM not available.", "using_llm": False}
 
         template = """
-        Answer the following question based only on the provided context.
-        If the context does not contain the answer, respond with "This PDF does not have the answer to this question."
+        You are an information extraction system.
+
+        Task: Find the FULL FORM of a given abbreviation.
+
+        Return ONLY a valid JSON object. No extra text.
+
+        Output format:
+        {{
+            "full_form": "<only the full form or empty string>",
+            "source": "extracted" or "inferred"
+        }}
+
+        STRICT RULES:
+        - Output EXACTLY one JSON object. Nothing before or after.
+        - "full_form" must be a SHORT phrase, not a sentence.
+        - Do NOT include explanations, examples, or extra words.
+        - Do NOT repeat the abbreviation.
+        - If multiple candidates exist, choose the most relevant one.
+        - If full form is explicitly written in the context → "extracted"
+        - If you reasonably guess it → "inferred"
+        - "full_form" must contain ONLY the expansion words, never a sentence fragment or verb phrase leading into the term.
+
+        GOOD OUTPUT EXAMPLE:
+        {{
+            "full_form": "Scanning Electron Microscope",
+            "source": "extracted"
+        }}
 
         Context:
         {context}
 
-        Question:
-        {question}
-
-        Answer:
+        Abbreviation: {abbreviation}
         """
+
         prompt = ChatPromptTemplate.from_template(template)
+        response = (prompt | llm | StrOutputParser()).invoke({
+            "context": context,
+            "abbreviation": abbr
+        })
 
-        llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
-            google_api_key=api_key,
-            temperature=0,
-            convert_system_message_to_human=True
-        )
+        try:
+            clean = response.strip()
+            if clean.startswith("```json"):
+                clean = clean[7:]
+            elif clean.startswith("```"):
+                clean = clean[3:]
+            if clean.endswith("```"):
+                clean = clean[:-3]
+            parsed = json.loads(clean.strip())
+            ans = parsed.get("full_form", "NOT_FOUND")
+            source = parsed.get("source", "inferred")
+        except Exception:
+            ans = response.strip()
+            source = "inferred"
 
-        def format_docs(docs):
-            return "\n\n".join(doc.page_content for doc in docs)
-
-        # Create the RAG chain
-        rag_chain = (
-            {
-                "context": retriever | format_docs, 
-                "question": RunnablePassthrough()
-            }
-            | prompt
-            | llm
-            | StrOutputParser()
-        )
-
-        response = rag_chain.invoke(query)
-        return response.strip()
+        return {
+            "ans": ans,
+            "using_llm": source != "extracted",
+            "context": context,
+        }
 
     except Exception as e:
         traceback.print_exc()
-        return f"An error occurred: {e}"
+        return {"ans": f"An error occurred: {e}", "using_llm": False, "context": ""}
+
+
+def find_symbol_meaning(symbol: str, context: str, pdf_path: str = "", groq_api_key: Optional[str] = None, use_local_llm: bool = False) -> dict:
+    try:
+        rag_context = ""
+        if pdf_path:
+            vectorstore = get_vectorstore(pdf_path, groq_api_key)
+            if vectorstore:
+                retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
+                docs = retriever.invoke(f"What does the symbol {symbol} represent or mean?")
+                rag_context = "\n\n".join(d.page_content for d in docs)
+
+        combined_context = ""
+        if rag_context:
+            combined_context += "Relevant passages from the paper:\n" + rag_context + "\n\n"
+        if context:
+            combined_context += "Local context where the symbol appears:\n" + context
+
+        if not combined_context.strip():
+            return {"meaning": "NOT_FOUND", "description": "NOT_FOUND", "source": "not_found"}
+
+        template = """You are extracting mathematical symbol definitions from a research paper.
+
+Return ONLY a valid JSON object. No extra text.
+
+Output format:
+{{
+  "meaning": "<1-4 word name for the symbol>",
+  "description": "<one sentence describing what it represents>",
+  "source": "extracted" or "inferred"
+}}
+
+STRICT RULES:
+- Read ALL the provided context carefully to understand what the symbol represents.
+- Do NOT just pick the word that appears immediately before or after the symbol. That adjacent word is often unrelated to the symbol's true meaning.
+- Look for explicit definitions like "X denotes ...", "X represents ...", "X is the ...", "where X is ...".
+- "meaning" must be a SHORT noun phrase (1-4 words), like "learning rate", "reward function", "robot policy".
+- "description" must explain what the symbol represents in the paper.
+- If the meaning is explicitly defined in the context → source = "extracted"
+- If you reasonably infer it → source = "inferred"
+- If you cannot determine the meaning → set meaning to "NOT_FOUND"
+
+Context:
+{context}
+
+Symbol: {symbol}
+"""
+
+        llm = get_llm(use_local_llm, groq_api_key)
+        if not llm:
+            return {"meaning": "NOT_FOUND", "description": "NOT_FOUND", "source": "not_found"}
+
+        prompt = ChatPromptTemplate.from_template(template)
+
+        response = (prompt | llm | StrOutputParser()).invoke({
+            "symbol": symbol,
+            "context": combined_context
+        }).strip()
+
+        if response.startswith("```json"):
+            response = response[7:]
+        elif response.startswith("```"):
+            response = response[3:]
+        if response.endswith("```"):
+            response = response[:-3]
+        response = response.strip()
+
+        try:
+            res = json.loads(response)
+            return {
+                "meaning": res.get("meaning", "NOT_FOUND"),
+                "description": res.get("description", "NOT_FOUND"),
+                "source": res.get("source", "inferred")
+            }
+        except:
+            return {"meaning": "NOT_FOUND", "description": "NOT_FOUND", "source": "not_found"}
+
+    except Exception:
+        traceback.print_exc()
+        return {"meaning": "NOT_FOUND", "description": "NOT_FOUND", "source": "not_found"}
+
+
+def critique_abbr(abbr: str, expansion: str, context: str, groq_api_key: Optional[str] = None, use_local_llm: bool = False) -> str:
+    """
+    Stage-2 critique: a second SLM call that acts as an independent judge,
+    evaluating whether `expansion` is correct for `abbr` in context.
+    Returns "HIGH", "MEDIUM", or "LOW".
+    """
+    try:
+        llm = get_llm(use_local_llm, groq_api_key)
+        if not llm:
+            return "MEDIUM"
+
+        template = """You are verifying whether a proposed abbreviation expansion is correct.
+
+Abbreviation: {abbr}
+Proposed expansion: {expansion}
+Document context:
+{context}
+
+Is "{expansion}" the correct full form for "{abbr}" in this context?
+Return ONLY a JSON object with keys "confidence" (HIGH, MEDIUM, or LOW) and "reason" (one sentence).
+- HIGH: expansion is clearly correct and consistent with the context.
+- MEDIUM: expansion is plausible but uncertain or not directly confirmed in context.
+- LOW: expansion is likely wrong, irrelevant, or cannot be verified from context.
+
+{{"confidence": "...", "reason": "..."}}"""
+
+        prompt = ChatPromptTemplate.from_template(template)
+        response = (prompt | llm | StrOutputParser()).invoke({
+            "abbr": abbr,
+            "expansion": expansion,
+            "context": context,
+        }).strip()
+
+        if response.startswith("```json"):
+            response = response[7:]
+        elif response.startswith("```"):
+            response = response[3:]
+        if response.endswith("```"):
+            response = response[:-3]
+
+        parsed = json.loads(response.strip())
+        confidence = parsed.get("confidence", "MEDIUM").upper()
+        return confidence if confidence in ("HIGH", "MEDIUM", "LOW") else "MEDIUM"
+    except Exception:
+        return "MEDIUM"
+
+
+def critique_sym(symbol: str, meaning: str, context: str, groq_api_key: Optional[str] = None, use_local_llm: bool = False) -> str:
+    """
+    Stage-2 critique: a second SLM call that acts as an independent judge,
+    evaluating whether `meaning` is correct for `symbol` in context.
+    Returns "HIGH", "MEDIUM", or "LOW".
+    """
+    try:
+        llm = get_llm(use_local_llm, groq_api_key)
+        if not llm:
+            return "MEDIUM"
+
+        template = """You are verifying whether a proposed symbol meaning is correct.
+
+Symbol: {symbol}
+Proposed meaning: {meaning}
+Document context:
+{context}
+
+Is "{meaning}" the correct meaning for "{symbol}" in this context?
+Return ONLY a JSON object with keys "confidence" (HIGH, MEDIUM, or LOW) and "reason" (one sentence).
+- HIGH: meaning is clearly stated or strongly implied in the context.
+- MEDIUM: meaning is plausible but not explicitly confirmed in context.
+- LOW: meaning is likely wrong or cannot be verified from context.
+
+{{"confidence": "...", "reason": "..."}}"""
+
+        prompt = ChatPromptTemplate.from_template(template)
+        response = (prompt | llm | StrOutputParser()).invoke({
+            "symbol": symbol,
+            "meaning": meaning,
+            "context": context,
+        }).strip()
+
+        if response.startswith("```json"):
+            response = response[7:]
+        elif response.startswith("```"):
+            response = response[3:]
+        if response.endswith("```"):
+            response = response[:-3]
+
+        parsed = json.loads(response.strip())
+        confidence = parsed.get("confidence", "MEDIUM").upper()
+        return confidence if confidence in ("HIGH", "MEDIUM", "LOW") else "MEDIUM"
+    except Exception:
+        return "MEDIUM"

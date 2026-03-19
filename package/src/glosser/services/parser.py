@@ -1,15 +1,197 @@
 import pymupdf
 import re
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 from . import definitions
+
+from PIL import Image
+import io
+
+try:
+    from pix2tex.cli import LatexOCR
+    latex_ocr_model = LatexOCR()
+except ImportError:
+    latex_ocr_model = None
+
+
+_NUMERIC_CITATION_PATTERN = re.compile(r'\[\s*(\d{1,3})\s*\]')
+_AUTHOR_YEAR_ET_AL_PATTERN = re.compile(r'\b([A-Z][A-Za-z\'\-]+)\s+et al\.\s*\(\s*((?:19|20)\d{2}[a-z]?)\s*\)')
+_AUTHOR_YEAR_ET_AL_BRACKET_PATTERN = re.compile(r'\b([A-Z][A-Za-z\'\-]+)\s+et al\.\s*\[\s*((?:19|20)\d{2}[a-z]?)\s*\]')
+_AUTHOR_YEAR_BRACKET_GROUP_PATTERN = re.compile(r'\[([^\[\]]*(?:19|20)\d{2}[a-z]?[^\[\]]*)\]')
+_AUTHOR_YEAR_PARENTHESES_GROUP_PATTERN = re.compile(r'\(([^)]*(?:19|20)\d{2}[a-z]?[^)]*)\)')
+_AUTHOR_YEAR_PART_PATTERN = re.compile(
+    r'([A-Z][A-Za-z\'\-]+(?:\s+et al\.)?(?:\s+(?:and|&)\s+[A-Z][A-Za-z\'\-]+)*)\s*,?\s*((?:19|20)\d{2}[a-z]?)'
+)
+_YEAR_PATTERN = re.compile(r'\b((?:19|20)\d{2})[a-z]?\b')
+_REFERENCE_ENTRY_START_PATTERN = re.compile(r"[A-Z][A-Za-z'\-]+,\s+[A-Z]")
+_AUTHOR_PARTICLES = {"de", "del", "der", "van", "von", "da", "di", "la", "le"}
+
+def _canonical_year(year_text: str) -> Optional[str]:
+    match = _YEAR_PATTERN.search(year_text.lower())
+    return match.group(1) if match else None
+
+def _extract_author_key_from_segment(segment: str) -> Optional[str]:
+    text = segment.strip()
+    if not text: return None
+    text = re.sub(r'^\W+', '', text)
+    text = re.sub(r'^(?:see|e\.g\.|cf\.|for example|for instance)\s+', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'\bet\s+al\.?$', '', text, flags=re.IGNORECASE).strip()
+    text = re.split(r'\s+(?:and|&)\s+', text, maxsplit=1, flags=re.IGNORECASE)[0].strip()
+    tokens = re.findall(r"[A-Za-z][A-Za-z'\-]+", text)
+    if not tokens: return None
+    for token in reversed(tokens):
+        lowered = token.lower()
+        if lowered not in _AUTHOR_PARTICLES and len(lowered) > 1:
+            return re.sub(r"[^a-z]", "", lowered)
+    return re.sub(r"[^a-z]", "", tokens[-1].lower())
+
+def _extract_author_year_pairs_from_parenthetical(inner_text: str) -> List[Tuple[str, str]]:
+    pairs: List[Tuple[str, str]] = []
+    for part in re.split(r';', inner_text):
+        part = part.strip()
+        if not part: continue
+        for match in _AUTHOR_YEAR_PART_PATTERN.finditer(part):
+            author_key = _extract_author_key_from_segment(match.group(1))
+            year = _canonical_year(match.group(2))
+            if author_key and year:
+                pairs.append((author_key, year))
+    return pairs
+
+def _find_references_start_page(doc: pymupdf.Document) -> Optional[int]:
+    for page_idx in range(len(doc) - 1, -1, -1):
+        page_text = doc[page_idx].get_text()
+        match = re.search(r'\b(references|bibliography)\b', page_text, re.IGNORECASE)
+        if match:
+            return page_idx
+    return None
+
+def _extract_author_year_from_entry(entry_text: str) -> Optional[Tuple[str, str]]:
+    text = re.sub(r"\s+", " ", entry_text).strip()
+    if not text: return None
+    text = re.sub(r'^\s*(?:\[\d+\]|\d+[\.]|\d+[\)])\s*', '', text)
+    year_match = _YEAR_PATTERN.search(text)
+    if not year_match: return None
+    year = _canonical_year(year_match.group(0))
+    prefix = text[:year_match.start()].strip()
+    author_match = re.match(r"([A-Z][A-Za-z'\-]+)\s*,", prefix)
+    key = re.sub(r"[^a-z]", "", author_match.group(1).lower()) if author_match else _extract_author_key_from_segment(prefix)
+    return (key, year) if key and year else None
+
+def _extract_author_year_entries(doc: pymupdf.Document, references_page: int) -> List[str]:
+    entries = []
+    
+    for page_num in range(references_page, doc.page_count):
+        blocks = doc[page_num].get_text("blocks")
+        for b in blocks:
+            if b[6] != 0: continue
+            text = b[4].strip()
+            if not text or text.lower() in ["references", "bibliography"]: continue
+            
+            if re.search(r"(?:^|\n)\[\d+\]", text):
+                parts = re.split(r"(?:^|\n)(?=\[\d+\])", text)
+                for p in parts:
+                    p = p.strip().replace('\n', ' ')
+                    if p: entries.append(p)
+            elif re.search(r"(?:^|\n)\[[A-Z]", text):
+                parts = re.split(r"(?:^|\n)(?=\[[A-Z])", text)
+                for p in parts:
+                    p = p.strip().replace('\n', ' ')
+                    if p: entries.append(p)
+            else:
+                entries.append(text.replace('\n', ' '))
+                
+    return entries
+
+def build_references_db(doc: pymupdf.Document, groq_api_key: Optional[str] = None, use_local_llm: bool = False, progress_callback: Optional[callable] = None) -> Dict[str, Dict]:
+    db = {"numeric": {}, "author_year": {}}
+    ref_start_page = _find_references_start_page(doc)
+    if ref_start_page is None: return db
+
+    full_ref_text = ""
+    ref_blocks = []
+    for p in range(ref_start_page, doc.page_count):
+        full_ref_text += doc[p].get_text() + "\n"
+        for b in doc[p].get_text("blocks"):
+            if b[6] == 0:
+                text = b[4].strip()
+                if text and text.lower() not in ["references", "bibliography"]:
+                    ref_blocks.append(text.replace("\n", " "))
+
+    all_entries = _extract_author_year_entries(doc, ref_start_page)
+    to_process_refs = []
+
+    for i, entry in enumerate(all_entries):
+        num_match = re.match(r"^\[(\d+)\]", entry)
+        if num_match:
+            idx = int(num_match.group(1))
+            to_process_refs.append({"id": f"num_{idx}", "text": entry})
+        else:
+            ay = _extract_author_year_from_entry(entry)
+            if ay:
+                to_process_refs.append({"id": f"ay_{ay[0]}_{ay[1]}", "text": entry, "target_author": ay[0], "target_year": ay[1]})
+
+    citation_refs = find_references(doc)
+    existing_ay_ids = {r["id"] for r in to_process_refs if r["id"].startswith("ay_")}
+
+    for ref in citation_refs:
+        if ref.get("format_type") == "NUMERIC_BRACKET": continue
+
+        auth = ref.get("author_key")
+        yr = ref.get("year")
+        if not auth or not yr: continue
+
+        key = f"ay_{auth}_{yr}"
+        if key not in existing_ay_ids:
+            snippet = None
+            search_regex = rf"{auth}.*?{yr}"
+
+            for block_text in ref_blocks:
+                if re.search(search_regex, block_text, re.IGNORECASE | re.DOTALL):
+                    snippet = block_text
+                    break
+
+            if not snippet:
+                match = re.search(search_regex, full_ref_text, re.IGNORECASE | re.DOTALL)
+                if match:
+                    start_idx = max(0, match.start() - 300)
+                    end_idx = min(len(full_ref_text), match.end() + 300)
+                    snippet = full_ref_text[start_idx:end_idx].replace('\n', ' ')
+
+            if snippet:
+                to_process_refs.append({"id": key, "text": snippet, "target_author": auth, "target_year": yr})
+                existing_ay_ids.add(key)
+            else:
+                db["author_year"][f"{auth}_{yr}"] = {"title": None, "year": yr}
+
+    if to_process_refs:
+        results = {}
+        for i, ref in enumerate(to_process_refs):
+            res = definitions.extract_title_year_from_reference(ref["text"], groq_api_key, target_author=ref.get("target_author"), target_year=ref.get("target_year"), use_local_llm=use_local_llm)
+            if res:
+                results[ref["id"]] = res
+            if progress_callback:
+                progress_callback(i + 1, len(to_process_refs))
+
+        for ref in to_process_refs:
+            ref_id = ref["id"]
+            if ref_id in results:
+                if ref_id.startswith("num_"):
+                    idx = int(ref_id[4:])
+                    db["numeric"][idx] = results[ref_id]
+                elif ref_id.startswith("ay_"):
+                    key = ref_id[3:]
+                    db["author_year"][key] = results[ref_id]
+
+    return db
 
 
 def find_references(doc: pymupdf.Document, progress_callback: Optional[callable] = None) -> List[dict]:
     """
-    Find occurrences of references like "[n]" where n is any integer in a two-column research paper.
-    Returns a list of reference dicts (same shape as original analyzer.py).
+        Find in-text citations in a two-column research paper.
+        Supports:
+            1) Numeric bracket style: [n]
+            2) Author-year parenthetical: (Author, 2020)
+            3) Author-year narrative: Author et al. (2020)
     """
-    pattern = r'\[\s*(\d+)\s*\]'
     refs = []
     num_pages = len(doc)
 
@@ -44,8 +226,8 @@ def find_references(doc: pymupdf.Document, progress_callback: Optional[callable]
                     cum.append((start, end, s))
                     pos = end
 
-                # find matches on the concatenated line text
-                for match in re.finditer(pattern, full_line_text):
+                # find numeric bracket citations: [n]
+                for match in _NUMERIC_CITATION_PATTERN.finditer(full_line_text):
                     mstart = match.start()
                     # find the span that contains the start of the match (fallback to first span)
                     use_span = None
@@ -59,6 +241,7 @@ def find_references(doc: pymupdf.Document, progress_callback: Optional[callable]
                     refs.append({
                         "text": match.group(0),
                         "number": int(match.group(1)),
+                        "format_type": "NUMERIC_BRACKET",
                         "page": page_idx,
                         "column": column,
                         "block": block_idx,
@@ -66,64 +249,120 @@ def find_references(doc: pymupdf.Document, progress_callback: Optional[callable]
                         "bbox": use_span.get("bbox"),
                     })
 
+                for match in _AUTHOR_YEAR_PARENTHESES_GROUP_PATTERN.finditer(full_line_text):
+                    mstart = match.start()
+                    use_span = None
+                    for (s_start, s_end, s_obj) in cum:
+                        if s_start <= mstart < s_end:
+                            use_span = s_obj
+                            break
+                    if use_span is None and cum:
+                        use_span = cum[0][2]
+
+                    pairs = _extract_author_year_pairs_from_parenthetical(match.group(1))
+                    for author_key, year in pairs:
+                        refs.append({
+                            "text": match.group(0),
+                            "author_key": author_key,
+                            "year": year,
+                            "format_type": "AUTHOR_YEAR_PARENTHESES",
+                            "page": page_idx,
+                            "column": column,
+                            "block": block_idx,
+                            "line": line_idx,
+                            "bbox": use_span.get("bbox"),
+                        })
+
+                # find author-year narrative citations: Author et al. (2020)
+                for match in _AUTHOR_YEAR_ET_AL_PATTERN.finditer(full_line_text):
+                    mstart = match.start()
+                    use_span = None
+                    for (s_start, s_end, s_obj) in cum:
+                        if s_start <= mstart < s_end:
+                            use_span = s_obj
+                            break
+                    if use_span is None and cum:
+                        use_span = cum[0][2]
+
+                    author_key = _extract_author_key_from_segment(match.group(1))
+                    year = _canonical_year(match.group(2))
+                    if author_key and year:
+                        refs.append({
+                            "text": match.group(0),
+                            "author_key": author_key,
+                            "year": year,
+                            "format_type": "AUTHOR_YEAR_ET_AL",
+                            "page": page_idx,
+                            "column": column,
+                            "block": block_idx,
+                            "line": line_idx,
+                            "bbox": use_span.get("bbox"),
+                        })
+
+                # find author-year square-bracket group citations: [Author et al., 2020] or [A, 2019; B, 2020]
+                for match in _AUTHOR_YEAR_BRACKET_GROUP_PATTERN.finditer(full_line_text):
+                    mstart = match.start()
+                    use_span = None
+                    for (s_start, s_end, s_obj) in cum:
+                        if s_start <= mstart < s_end:
+                            use_span = s_obj
+                            break
+                    if use_span is None and cum:
+                        use_span = cum[0][2]
+
+                    pairs = _extract_author_year_pairs_from_parenthetical(match.group(1))
+                    for author_key, year in pairs:
+                        refs.append({
+                            "text": match.group(0),
+                            "author_key": author_key,
+                            "year": year,
+                            "format_type": "AUTHOR_YEAR_BRACKET",
+                            "page": page_idx,
+                            "column": column,
+                            "block": block_idx,
+                            "line": line_idx,
+                            "bbox": use_span.get("bbox"),
+                        })
+
+                # find author-year narrative citations with square brackets: Author et al. [2020]
+                for match in _AUTHOR_YEAR_ET_AL_BRACKET_PATTERN.finditer(full_line_text):
+                    mstart = match.start()
+                    use_span = None
+                    for (s_start, s_end, s_obj) in cum:
+                        if s_start <= mstart < s_end:
+                            use_span = s_obj
+                            break
+                    if use_span is None and cum:
+                        use_span = cum[0][2]
+
+                    author_key = _extract_author_key_from_segment(match.group(1))
+                    year = _canonical_year(match.group(2))
+                    if author_key and year:
+                        refs.append({
+                            "text": match.group(0),
+                            "author_key": author_key,
+                            "year": year,
+                            "format_type": "AUTHOR_YEAR_ET_AL_BRACKET",
+                            "page": page_idx,
+                            "column": column,
+                            "block": block_idx,
+                            "line": line_idx,
+                            "bbox": use_span.get("bbox"),
+                        })
+
     sorted_refs = sorted(refs, key=lambda x: (x["page"], x["column"], x["block"], x["line"]))
 
     if not sorted_refs:
         return []
 
-    # Remove references that appear in the References section (from the page containing "References" onwards)
-    references_page = None
-    for page_idx in range(len(doc) - 1, -1, -1):
-        page_text = doc[page_idx].get_text()
-        if "References" in page_text or "Bibliography" in page_text:
-            references_page = page_idx
-            break
+    # Remove citations that appear in the References section and after it.
+    references_page = _find_references_start_page(doc)
 
     if references_page is not None:
         sorted_refs = [ref for ref in sorted_refs if ref["page"] < references_page]
 
     return sorted_refs
 
-
-
-def find_paper_info(n: int, doc_path: str = "uploads/twocolpaper.pdf") -> Optional[str]:
-    """
-    Find the title of a paper referenced by number n in the References section of the PDF at doc_path.
-    """
-    doc = pymupdf.open(doc_path)
-
-    references_page = None
-    references_content = ""
-
-    for page_num in range(doc.page_count - 1, -1, -1):
-        page = doc[page_num]
-        text = page.get_text()
-
-        if "References" in text or "Bibliography" in text:
-            references_page = page_num
-            break
-
-    if references_page is None:
-        return None
-
-    for page_num in range(references_page, doc.page_count):
-        page = doc[page_num]
-        references_content += page.get_text()
-
-    patterns = [
-        fr'\[{n}\]\s*(.*?)(?=\[\d+\]|\n\s*\[\d+\]|$)',
-        fr'{n}\.\s*(.*?)(?=\d+\.|$)',
-        fr'{n}\)\s*(.*?)(?=\d+\)|$)'
-    ]
-
-    for pattern in patterns:
-        matches = re.finditer(pattern, references_content, re.DOTALL)
-        for match in matches:
-            reference_text = match.group(1).strip()
-            if reference_text:
-                return reference_text
-
-    return None
 
 def find_abbreviations(doc: pymupdf.Document, progress_callback: Optional[callable] = None) -> List[dict]:
     """
@@ -166,68 +405,172 @@ def find_abbreviations(doc: pymupdf.Document, progress_callback: Optional[callab
 
                     # For each match, create a dictionary with its details
                     for match in matches:
-                        abbs.append({
-                            "text": match.group(0),
-                            "page": page_idx,
-                            "column": column,
-                            "block": block_idx,
-                            "line": line_idx,
-                            "bbox": span["bbox"],
-                        })
+                            abbs.append({
+                                "text": match.group(0),
+                                "page": page_idx,
+                                "column": column,
+                                "block": block_idx,
+                                "line": line_idx,
+                                "bbox": span["bbox"],
+                            })
 
     return abbs
 
-
-def build_references_db(doc: pymupdf.Document, groq_api_key: Optional[str] = None, progress_callback: Optional[callable] = None) -> Dict[int, Dict[str, Optional[str]]]:
+def find_symbols(doc: pymupdf.Document, progress_callback: Optional[callable] = None) -> List[dict]:
     """
-    Build a database of references with their titles and years extracted from the references section.
-    Scans the last two pages to find the references section, extracts individual reference texts,
-    and uses LLM to parse title and year for each.
+    Finds mathematical symbols in the document using Unicode ranges and LatexOCR.
     """
-    db = {}
-
+    symbols = []
     num_pages = len(doc)
-    pages_to_check = doc[-2:] if num_pages >= 2 else doc
 
-    references_content = ""
-    found_references = False
+    unicode_pattern = re.compile(r'[\u0370-\u03FF\u2200-\u22FF\u2A00-\u2AFF\u2070-\u209F]+')
+    latex_symbol_pattern = re.compile(r'\\[a-zA-Z]+|[a-zA-Z](?:_[a-zA-Z0-9]+|\^[a-zA-Z0-9]+)')
 
-    for page in pages_to_check:
-        text = page.get_text()
-        if not found_references:
-            if "References" in text or "Bibliography" in text:
-                found_references = True
-                # Find the position of "References" and take text from there
-                ref_pos = text.find("References") if "References" in text else text.find("Bibliography")
-                if ref_pos != -1:
-                    references_content += text[ref_pos:]
-                else:
-                    references_content += text
-            # If not found, continue to next page
-        else:
-            references_content += text
+    _LATEX_NON_SYMBOLS = {
+        '\\text', '\\begin', '\\end', '\\frac', '\\left', '\\right',
+        '\\mathbf', '\\mathrm', '\\mathcal', '\\mathit', '\\mathtt',
+        '\\quad', '\\qquad',
+        '\\tiny', '\\scriptsize', '\\footnotesize', '\\small', '\\normalsize',
+        '\\large', '\\Large', '\\LARGE', '\\huge', '\\Huge',
+        '\\displaystyle', '\\textstyle', '\\scriptstyle', '\\scriptscriptstyle',
+        '\\bf', '\\rm', '\\it', '\\sf', '\\tt', '\\boldmath', '\\cal',
+        '\\mathbb', '\\mathsf', '\\mathfrak',
+        '\\bigg', '\\Bigg', '\\Big', '\\big',
+        '\\bigl', '\\bigr', '\\Bigl', '\\Bigr', '\\biggl', '\\biggr',
+        '\\operatorname', '\\mbox', '\\hbox',
+        '\\underbrace', '\\overbrace', '\\stackrel', '\\underset', '\\overset',
+        '\\bar', '\\hat', '\\tilde', '\\vec', '\\dot', '\\ddot',
+        '\\overline', '\\underline', '\\widehat', '\\widetilde',
+        '\\strut', '\\phantom',
+    }
 
-    if not references_content:
-        return db
+    _VALID_UPPERCASE_LATEX = {
+        '\\Gamma', '\\Delta', '\\Theta', '\\Lambda', '\\Xi', '\\Pi',
+        '\\Sigma', '\\Upsilon', '\\Phi', '\\Psi', '\\Omega',
+        '\\Alpha', '\\Beta', '\\Epsilon', '\\Zeta', '\\Eta',
+        '\\Iota', '\\Kappa', '\\Mu', '\\Nu', '\\Rho', '\\Tau', '\\Chi',
+    }
 
-    # Regex to find individual references: [1] text until next [2] or end
-    pattern = r'\[(\d+)\]\s*(.*?)(?=\[\d+\]|$)'
-    matches = re.findall(pattern, references_content, re.DOTALL)
+    _COMMON_SYMBOLS = {
+        '=', '+', '-', '*', '/', '%', '^', '&', '|', '~', '!', '>', '<', '≥', '≤', '≈', '≠', '±', '×', '÷',
+        '(', ')', '[', ']', '{', '}', ',', '.', ';', ':', '?', '!', '°',
+        '∞', '∝', '∂', '∑', '√', '∝', '∞',
+        '∘', '∙', '∧', '∨', '∩', '∪', '∫', '∴', '∵', '∼', '≡', '≪', '≫', '⊖', '⊗', '⊘', '⊙', '⊥', '⊢', '⊣', '⊤',
+        '¬', '∏', '∑', '−', '∕', '∗', '∙', '√', '∝', '∞',
+        '∠', '∨', '∪', '∫', '∬', '∭', '∮', '∯', '∰', '∱', '∲', '∳',
+        # LaTeX versions
+        '\\ge', '\\le', '\\neq', '\\approx', '\\pm', '\\mp', '\\times', '\\div',
+        '\\infty', '\\propto', '\\partial', '\\nabla', '\\in', '\\notin', '\\ni',
+        '\\prod', '\\sum', '\\sqrt', '\\int', '\\oint', '\\forall', '\\exists',
+        '\\emptyset', '\\Delta', '\\nabla', '\\to', '\\leftarrow', '\\rightarrow',
+        '\\leftrightarrow', '\\uparrow', '\\downarrow', '\\langle', '\\rangle',
+        '\\cdot', '\\cdots', '\\vdots', '\\ddots', '\\quad', '\\qquad', '\\text',
+    }
+    import logging
+    logging.getLogger('pix2tex').setLevel(logging.ERROR)
+    logging.getLogger('PIL').setLevel(logging.ERROR)
 
-    num_matches = len(matches)
-    for i, (number_str, ref_text) in enumerate(matches):
+    for page_idx, page in enumerate(doc):
         if progress_callback:
-            progress_callback(i, num_matches)
-        number = int(number_str)
-        ref_text = ref_text.strip()
-        if ref_text:
-            extracted = definitions.extract_title_year_from_reference(ref_text, groq_api_key)
-            if extracted:
-                db[number] = extracted
-            else:
-                db[number] = {"title": None, "year": None}
+            progress_callback(page_idx, num_pages)
+        
+        blocks = page.get_text("dict")["blocks"]
+        page_width = page.rect.width
+        
+        for block_idx, block in enumerate(blocks):
+            if "lines" not in block:
+                continue
+            
+            block_center = (block["bbox"][0] + block["bbox"][2]) / 2
+            column = 1 if block_center < page_width / 2 else 2
+            
+            block_text = "".join(span["text"] for line in block["lines"] for span in line["spans"])
 
-    if progress_callback:
-        progress_callback(num_matches, num_matches)
+            words = [w for w in block_text.split() if w.isalpha()]
+            is_equation = False
+            
+            # Avoid likely bibliography, author blocks, or pure citation/list blocks
+            has_year = bool(re.search(r'\b(?:19|20)\d{2}\b', block_text))
+            is_author_list = (
+                re.search(r'\bet\s+al\.?', block_text, re.I)
+                or block_text.count(",") > 4
+                or has_year
+            )
+            
+            # Pure citation/list blocks like "[1] Text..." or "1. Text..."
+            is_list_item = bool(re.match(r'^\s*(?:\[\d+\]|\d+[\.\)])\s+', block_text))
 
-    return db
+            if not is_author_list and not is_list_item and len(words) < 12:
+                # Require unambiguous math signals: = or sub/superscripts
+                has_math_op = any(c in block_text for c in "=<>/±∑∏√")
+                has_sub_super = any(c in block_text for c in "_^")
+                has_brackets = any(c in block_text for c in "[]{}|") 
+                
+                # Equation must have at least two math-like signals or be very sparse
+                if (has_math_op and (has_sub_super or has_brackets)) or block_text.count('=') >= 1:
+                    is_equation = True
+                elif len(words) < 5 and any(c.isdigit() for c in block_text) and (has_math_op or has_sub_super):
+                    is_equation = True
+            
+            if is_equation and latex_ocr_model is not None:
+                rect = pymupdf.Rect(block["bbox"])
+                if rect.width > 10 and rect.height > 10:
+                    pix = page.get_pixmap(clip=rect, dpi=200)
+                    img_bytes = pix.tobytes("png")
+                    img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+                    
+                    try:
+                        latex_text = latex_ocr_model(img)
+                        found_latex_symbols = latex_symbol_pattern.findall(latex_text)
+                        for sys_match in set(found_latex_symbols):
+                            # Skip if purely alphanumeric and single char (these are often variables)
+                            if len(sys_match) == 1 and sys_match.isalpha():
+                                continue
+                            if sys_match in _LATEX_NON_SYMBOLS or sys_match in _COMMON_SYMBOLS:
+                                continue
+                            
+                            cmd_name = sys_match[1:] if sys_match.startswith('\\') else sys_match
+                            
+                            # Filter compound OCR artifacts (e.g. \quadRichard, \uniliedevaluation)
+                            if len(cmd_name) > 15:
+                                continue
+                            # Filter artifacts containing non-standard chars like closing brackets
+                            if any(c in sys_match for c in ')]}>'):
+                                continue
+                            # Filter OCR artifacts of capitalized words that aren't Greek capitals
+                            if sys_match.startswith('\\') and cmd_name[:1].isupper() and sys_match not in _VALID_UPPERCASE_LATEX:
+                                continue
+                            
+                            symbols.append({
+                                "text": sys_match,
+                                "page": page_idx,
+                                "column": column,
+                                "block": block_idx,
+                                "bbox": block["bbox"],
+                                "context": block_text[:400],
+                                "source": "ocr"
+                            })
+                    except Exception as e:
+                        pass
+
+            for line_idx, line in enumerate(block["lines"]):
+                for span in line["spans"]:
+                    text = span["text"]
+                    matches = list(unicode_pattern.finditer(text))
+                    
+                    if matches:
+                        for match in matches:
+                            sym_text = match.group(0).strip()
+                            if sym_text and sym_text not in _COMMON_SYMBOLS:
+                                symbols.append({
+                                    "text": sym_text,
+                                    "page": page_idx,
+                                    "column": column,
+                                    "block": block_idx,
+                                    "line": line_idx,
+                                    "bbox": span["bbox"],
+                                    "context": block_text[:400],
+                                    "source": "unicode"
+                                })
+
+    return symbols
