@@ -7,6 +7,7 @@ name = "glosser"
 version = "0.0.4"
 dependencies = [
     "PyMuPDF",
+    "pymupdf-fonts",
     "langchain-core",
     "langchain-community",
     "langchain-text-splitters",
@@ -14,6 +15,7 @@ dependencies = [
     "langchain-huggingface",
     "faiss-cpu",
     "sentence-transformers",
+    "transformers",
     "rich",
     "python-dotenv",
     "pix2tex",
@@ -25,7 +27,7 @@ dependencies = [
 authors = [
   { name = "Sunil Bishnoi", email = "b23me1072@iitj.ac.in" },
 ]
-description = "Automatically annotates research PDFs with citations and abbreviation expansions."
+description = "Automatically annotates research PDFs with citations and abbreviation expansions and symbol meanings."
 readme = "README.md"
 requires-python = ">=3.9"
 classifiers = [

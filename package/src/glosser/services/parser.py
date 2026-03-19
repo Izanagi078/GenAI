@@ -9,7 +9,7 @@ import io
 try:
     from pix2tex.cli import LatexOCR
     latex_ocr_model = LatexOCR()
-except ImportError:
+except Exception:
     latex_ocr_model = None
 
 

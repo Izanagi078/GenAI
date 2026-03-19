@@ -19,20 +19,50 @@ def get_unicode_font_path():
         return _unicode_font_path
     _unicode_font_checked = True
     common_fonts = [
+        # Windows
         "C:/Windows/Fonts/cambria.ttc",
         "C:/Windows/Fonts/seguiemj.ttf",
         "C:/Windows/Fonts/arial.ttf",
         "C:/Windows/Fonts/segoeui.ttf",
         "C:/Windows/Fonts/times.ttf",
+        # Linux
         "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/dejavu/DejaVuSans.ttf",
         "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+        "/usr/share/fonts/liberation/LiberationSans-Regular.ttf",
+        "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
+        "/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf",
+        "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
+        "/usr/share/fonts/opentype/noto/NotoSans-Regular.ttf",
+        # macOS
         "/System/Library/Fonts/Supplemental/Arial.ttf",
-        "/Library/Fonts/Arial.ttf"
+        "/Library/Fonts/Arial.ttf",
+        "/System/Library/Fonts/Helvetica.ttc",
+        "/System/Library/Fonts/Geneva.ttf",
     ]
     for f in common_fonts:
         if os.path.exists(f):
             _unicode_font_path = f
             return f
+
+    # Last-resort: ask matplotlib's font manager to locate any TrueType font
+    # on the system – it searches platform-specific font directories for us.
+    try:
+        from matplotlib import font_manager as _fm
+        candidates = _fm.findSystemFonts(fontext="ttf")
+        # Prefer well-known Unicode-capable families
+        preferred = ("dejavu", "liberation", "ubuntu", "freesans", "noto", "arial", "helvetica")
+        for path in candidates:
+            if any(n in os.path.basename(path).lower() for n in preferred):
+                _unicode_font_path = path
+                return path
+        # Accept any TTF if nothing preferred was found
+        if candidates:
+            _unicode_font_path = candidates[0]
+            return candidates[0]
+    except Exception:
+        pass
+
     return None
 
 def get_page_content_bbox(page: pymupdf.Page, padding=0) -> pymupdf.Rect:
@@ -140,7 +170,10 @@ def add_definition_to_margin(
     if font_path:
         tw.fill_textbox(target_rect, full_text, font=pymupdf.Font(fontfile=font_path), fontsize=5)
     else:
-        tw.fill_textbox(target_rect, full_text, fontsize=5)
+        try:
+            tw.fill_textbox(target_rect, full_text, font=pymupdf.Font(fontname="ubuntu"), fontsize=5)
+        except Exception:
+            tw.fill_textbox(target_rect, full_text, fontsize=5)
 
     temp_doc = pymupdf.open()
     temp_page = temp_doc.new_page(width=page.rect.width, height=page.rect.height)
@@ -160,12 +193,18 @@ def add_definition_to_margin(
         if font_path:
             page.insert_textbox(target_rect, full_text, fontsize=5, fontfile=font_path, color=(0.5,0, 0))
         else:
-            page.insert_textbox(target_rect, full_text, fontsize=5, fontname="helv", color=(0.5,0, 0))
+            try:
+                page.insert_textbox(target_rect, full_text, fontsize=5, fontname="ubuntu", color=(0.5, 0, 0))
+            except Exception:
+                page.insert_textbox(target_rect, full_text, fontsize=5, fontname="helv", color=(0.5, 0, 0))
     else:
         if font_path:
             page.insert_textbox(target_rect, full_text, fontsize=5, fontfile=font_path, color=(0, 0.5, 0))
         else:
-            page.insert_textbox(target_rect, full_text, fontsize=5, fontname="helv", color=(0, 0.5, 0))
+            try:
+                page.insert_textbox(target_rect, full_text, fontsize=5, fontname="ubuntu", color=(0, 0.5, 0))
+            except Exception:
+                page.insert_textbox(target_rect, full_text, fontsize=5, fontname="helv", color=(0, 0.5, 0))
 
     return True
 
@@ -268,7 +307,10 @@ def add_symbol_definition_to_margin(
     if font_path:
         tw.fill_textbox(text_rect, text_str, font=pymupdf.Font(fontfile=font_path), fontsize=5)
     else:
-        tw.fill_textbox(text_rect, text_str, fontsize=5)
+        try:
+            tw.fill_textbox(text_rect, text_str, font=pymupdf.Font(fontname="ubuntu"), fontsize=5)
+        except Exception:
+            tw.fill_textbox(text_rect, text_str, fontsize=5)
 
     temp_doc = pymupdf.open()
     temp_page = temp_doc.new_page(width=page.rect.width, height=page.rect.height)
@@ -293,6 +335,9 @@ def add_symbol_definition_to_margin(
     if font_path:
         page.insert_textbox(text_rect, text_str, fontsize=5, fontfile=font_path, color=color)
     else:
-        page.insert_textbox(text_rect, text_str, fontsize=5, fontname="helv", color=color)
+        try:
+            page.insert_textbox(text_rect, text_str, fontsize=5, fontname="ubuntu", color=color)
+        except Exception:
+            page.insert_textbox(text_rect, text_str, fontsize=5, fontname="helv", color=color)
 
     return True
