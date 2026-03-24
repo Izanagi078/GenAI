@@ -1,0 +1,672 @@
+{
+  "TSGAN": {
+    "gt": "Temporal Social Graph Attention Network",
+    "with_ctx": {
+      "Qwen2.5-1.5B": {
+        "ans": "Temporal Social Graph Attention Network",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-3B": {
+        "ans": "Temporal Social Graph Attention Network",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-7B": {
+        "ans": "Temporal Social Graph Attention Network",
+        "ok": true,
+        "time": 0.1
+      },
+      "LLaMA3.2-3B": {
+        "ans": "Temporal Social Graph Attention Network",
+        "ok": true,
+        "time": 0.1
+      },
+      "Gemma3-4B": {
+        "ans": "Temporal Social Graph Attention Network",
+        "ok": true,
+        "time": 0.1
+      },
+      "DeepSeek-R1-7B": {
+        "ans": "<think>",
+        "ok": false,
+        "time": 0.5
+      }
+    },
+    "no_ctx": {
+      "Qwen2.5-1.5B": {
+        "ans": "Transparency, Sustainability, Globalization, Accountability, Networked",
+        "ok": false,
+        "time": 0.1
+      },
+      "Qwen2.5-3B": {
+        "ans": "Technical Standard Group Artificial Neural Network",
+        "ok": false,
+        "time": 0.1
+      },
+      "Qwen2.5-7B": {
+        "ans": "Text-to-Speech Generative Adversarial Network",
+        "ok": false,
+        "time": 0.1
+      },
+      "LLaMA3.2-3B": {
+        "ans": "Technical Service Group for Automotive Navigation",
+        "ok": false,
+        "time": 0.1
+      },
+      "Gemma3-4B": {
+        "ans": "Transformer-based Generative Adversarial Network",
+        "ok": false,
+        "time": 0.1
+      },
+      "DeepSeek-R1-7B": {
+        "ans": "<think>",
+        "ok": false,
+        "time": 0.5
+      }
+    }
+  },
+  "ASTAM": {
+    "gt": "Adaptive Socio-temporal Attention Module",
+    "with_ctx": {
+      "Qwen2.5-1.5B": {
+        "ans": "Adaptive Socio-temporal Attention Module",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-3B": {
+        "ans": "Adaptive Socio-temporal Attention Module",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-7B": {
+        "ans": "Adaptive Socio-temporal Attention Module",
+        "ok": true,
+        "time": 0.1
+      },
+      "LLaMA3.2-3B": {
+        "ans": "Adaptive Socio-temporal Attention Module",
+        "ok": true,
+        "time": 0.1
+      },
+      "Gemma3-4B": {
+        "ans": "Adaptive Socio-temporal Attention Module",
+        "ok": true,
+        "time": 0.1
+      },
+      "DeepSeek-R1-7B": {
+        "ans": "<think>",
+        "ok": false,
+        "time": 0.5
+      }
+    },
+    "no_ctx": {
+      "Qwen2.5-1.5B": {
+        "ans": "Automatic Speech-to-Text and Annotation Machine",
+        "ok": false,
+        "time": 0.1
+      },
+      "Qwen2.5-3B": {
+        "ans": "Advanced System Test and Management",
+        "ok": false,
+        "time": 0.1
+      },
+      "Qwen2.5-7B": {
+        "ans": "Annual Scientific and Technological Achievement Meeting",
+        "ok": false,
+        "time": 0.1
+      },
+      "LLaMA3.2-3B": {
+        "ans": "Association for Software Testing and Maintenance International",
+        "ok": false,
+        "time": 0.1
+      },
+      "Gemma3-4B": {
+        "ans": "Advanced Systems Technology and Management",
+        "ok": false,
+        "time": 0.1
+      },
+      "DeepSeek-R1-7B": {
+        "ans": "<think>",
+        "ok": false,
+        "time": 0.5
+      }
+    }
+  },
+  "AGI": {
+    "gt": "Aggression Intensity",
+    "with_ctx": {
+      "Qwen2.5-1.5B": {
+        "ans": "Aggression Intensity",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-3B": {
+        "ans": "Aggression Intensity",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-7B": {
+        "ans": "Aggression Intensity",
+        "ok": true,
+        "time": 0.1
+      },
+      "LLaMA3.2-3B": {
+        "ans": "Aggression Intensity",
+        "ok": true,
+        "time": 0.1
+      },
+      "Gemma3-4B": {
+        "ans": "Aggression Intensity",
+        "ok": true,
+        "time": 0.1
+      },
+      "DeepSeek-R1-7B": {
+        "ans": "<think>",
+        "ok": false,
+        "time": 0.5
+      }
+    },
+    "no_ctx": {
+      "Qwen2.5-1.5B": {
+        "ans": "Artificial General Intelligence",
+        "ok": false,
+        "time": 0.1
+      },
+      "Qwen2.5-3B": {
+        "ans": "Advanced General Intelligence",
+        "ok": false,
+        "time": 0.1
+      },
+      "Qwen2.5-7B": {
+        "ans": "Artificial General Intelligence",
+        "ok": false,
+        "time": 0.1
+      },
+      "LLaMA3.2-3B": {
+        "ans": "Artificial General Intelligence",
+        "ok": false,
+        "time": 0.1
+      },
+      "Gemma3-4B": {
+        "ans": "Artificial General Intelligence",
+        "ok": false,
+        "time": 0.1
+      },
+      "DeepSeek-R1-7B": {
+        "ans": "<think>",
+        "ok": false,
+        "time": 0.5
+      }
+    }
+  },
+  "GNCE": {
+    "gt": "Global Network Context Embedding",
+    "with_ctx": {
+      "Qwen2.5-1.5B": {
+        "ans": "Global Network Context Embedding",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-3B": {
+        "ans": "Global Network Context Embedding",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-7B": {
+        "ans": "Global Network Context Embedding",
+        "ok": true,
+        "time": 0.1
+      },
+      "LLaMA3.2-3B": {
+        "ans": "Global Network Context Embedding",
+        "ok": true,
+        "time": 0.1
+      },
+      "Gemma3-4B": {
+        "ans": "Global Network Context Embedding",
+        "ok": true,
+        "time": 0.1
+      },
+      "DeepSeek-R1-7B": {
+        "ans": "<think>",
+        "ok": false,
+        "time": 0.5
+      }
+    },
+    "no_ctx": {
+      "Qwen2.5-1.5B": {
+        "ans": "Government Non-Civilian Employees",
+        "ok": false,
+        "time": 0.1
+      },
+      "Qwen2.5-3B": {
+        "ans": "General Notation for Configuration Elements",
+        "ok": false,
+        "time": 0.1
+      },
+      "Qwen2.5-7B": {
+        "ans": "General Navigation and Communication Excellence",
+        "ok": false,
+        "time": 0.1
+      },
+      "LLaMA3.2-3B": {
+        "ans": "General Nursing Council of England",
+        "ok": false,
+        "time": 0.1
+      },
+      "Gemma3-4B": {
+        "ans": "Gujarat Narmada Valley Fertilizers & Chemicals Limited",
+        "ok": false,
+        "time": 0.1
+      },
+      "DeepSeek-R1-7B": {
+        "ans": "<think>",
+        "ok": false,
+        "time": 0.5
+      }
+    }
+  },
+  "SIA": {
+    "gt": "Social Influence Attention",
+    "with_ctx": {
+      "Qwen2.5-1.5B": {
+        "ans": "Social Influence Attention",
+        "ok": true,
+        "time": 0.0
+      },
+      "Qwen2.5-3B": {
+        "ans": "Social Influence Attention",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-7B": {
+        "ans": "Social Influence Attention",
+        "ok": true,
+        "time": 0.1
+      },
+      "LLaMA3.2-3B": {
+        "ans": "Social Influence Attention",
+        "ok": true,
+        "time": 0.0
+      },
+      "Gemma3-4B": {
+        "ans": "Social Influence Attention",
+        "ok": true,
+        "time": 0.1
+      },
+      "DeepSeek-R1-7B": {
+        "ans": "<think>",
+        "ok": false,
+        "time": 0.5
+      }
+    },
+    "no_ctx": {
+      "Qwen2.5-1.5B": {
+        "ans": "Structural Insurance Association",
+        "ok": false,
+        "time": 0.1
+      },
+      "Qwen2.5-3B": {
+        "ans": "Specialized Information Access",
+        "ok": false,
+        "time": 0.1
+      },
+      "Qwen2.5-7B": {
+        "ans": "Singapore Airlines",
+        "ok": false,
+        "time": 0.1
+      },
+      "LLaMA3.2-3B": {
+        "ans": "Social Insurance Agency",
+        "ok": false,
+        "time": 0.0
+      },
+      "Gemma3-4B": {
+        "ans": "Singapore Investment Authority",
+        "ok": false,
+        "time": 0.1
+      },
+      "DeepSeek-R1-7B": {
+        "ans": "<think>",
+        "ok": false,
+        "time": 0.5
+      }
+    }
+  },
+  "TDA": {
+    "gt": "Temporal Dynamics Attention",
+    "with_ctx": {
+      "Qwen2.5-1.5B": {
+        "ans": "Temporal Dynamics Attention",
+        "ok": true,
+        "time": 0.0
+      },
+      "Qwen2.5-3B": {
+        "ans": "Temporal Dynamics Attention",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-7B": {
+        "ans": "Temporal Dynamics Attention",
+        "ok": true,
+        "time": 0.1
+      },
+      "LLaMA3.2-3B": {
+        "ans": "Temporal Dynamics Attention",
+        "ok": true,
+        "time": 0.0
+      },
+      "Gemma3-4B": {
+        "ans": "Temporal Dynamics Attention",
+        "ok": true,
+        "time": 0.1
+      },
+      "DeepSeek-R1-7B": {
+        "ans": "<think>",
+        "ok": false,
+        "time": 0.5
+      }
+    },
+    "no_ctx": {
+      "Qwen2.5-1.5B": {
+        "ans": "Total Debt Adjustment",
+        "ok": false,
+        "time": 0.0
+      },
+      "Qwen2.5-3B": {
+        "ans": "Technical Data Assembly",
+        "ok": false,
+        "time": 0.1
+      },
+      "Qwen2.5-7B": {
+        "ans": "Tensor Decomposition Algorithm",
+        "ok": false,
+        "time": 0.1
+      },
+      "LLaMA3.2-3B": {
+        "ans": "Transtheoretical Model of Change (TTM)",
+        "ok": false,
+        "time": 0.1
+      },
+      "Gemma3-4B": {
+        "ans": "Total Dynamic Array",
+        "ok": false,
+        "time": 0.1
+      },
+      "DeepSeek-R1-7B": {
+        "ans": "<think>",
+        "ok": false,
+        "time": 0.5
+      }
+    }
+  },
+  "AAAI": {
+    "gt": "Association for the Advancement of Artificial Intelligence",
+    "with_ctx": {
+      "Qwen2.5-1.5B": {
+        "ans": "Association for the Advancement of Artificial Intelligence",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-3B": {
+        "ans": "Association for the Advancement of Artificial Intelligence",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-7B": {
+        "ans": "Association for the Advancement of Artificial Intelligence",
+        "ok": true,
+        "time": 0.1
+      },
+      "LLaMA3.2-3B": {
+        "ans": "Association for the Advancement of Artificial Intelligence",
+        "ok": true,
+        "time": 0.1
+      },
+      "Gemma3-4B": {
+        "ans": "Association for the Advancement of Artificial Intelligence",
+        "ok": true,
+        "time": 0.1
+      },
+      "DeepSeek-R1-7B": {
+        "ans": "<think>",
+        "ok": false,
+        "time": 0.5
+      }
+    },
+    "no_ctx": {
+      "Qwen2.5-1.5B": {
+        "ans": "Artificial Intelligence and Robotics Association",
+        "ok": false,
+        "time": 0.1
+      },
+      "Qwen2.5-3B": {
+        "ans": "American Association for Artificial Intelligence",
+        "ok": false,
+        "time": 0.1
+      },
+      "Qwen2.5-7B": {
+        "ans": "Association for the Advancement of Artificial Intelligence",
+        "ok": true,
+        "time": 0.1
+      },
+      "LLaMA3.2-3B": {
+        "ans": "American Association for Aeronautics and Astronautics",
+        "ok": false,
+        "time": 0.1
+      },
+      "Gemma3-4B": {
+        "ans": "Association for the Advancement of Artificial Intelligence",
+        "ok": true,
+        "time": 0.1
+      },
+      "DeepSeek-R1-7B": {
+        "ans": "<think>",
+        "ok": false,
+        "time": 0.5
+      }
+    }
+  },
+  "RNN": {
+    "gt": "Recurrent Neural Network",
+    "with_ctx": {
+      "Qwen2.5-1.5B": {
+        "ans": "Recurrent Neural Network",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-3B": {
+        "ans": "Recurrent Neural Network",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-7B": {
+        "ans": "Recurrent Neural Network",
+        "ok": true,
+        "time": 0.1
+      },
+      "LLaMA3.2-3B": {
+        "ans": "Recurrent Neural Network",
+        "ok": true,
+        "time": 0.1
+      },
+      "Gemma3-4B": {
+        "ans": "Recurrent Neural Network",
+        "ok": true,
+        "time": 0.1
+      },
+      "DeepSeek-R1-7B": {
+        "ans": "<think>",
+        "ok": false,
+        "time": 0.5
+      }
+    },
+    "no_ctx": {
+      "Qwen2.5-1.5B": {
+        "ans": "Recurrent Neural Network",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-3B": {
+        "ans": "Recurrent Neural Network",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-7B": {
+        "ans": "Recurrent Neural Network",
+        "ok": true,
+        "time": 0.1
+      },
+      "LLaMA3.2-3B": {
+        "ans": "Recurrent Neural Network",
+        "ok": true,
+        "time": 0.1
+      },
+      "Gemma3-4B": {
+        "ans": "Recurrent Neural Network",
+        "ok": true,
+        "time": 0.1
+      },
+      "DeepSeek-R1-7B": {
+        "ans": "<think>",
+        "ok": false,
+        "time": 0.5
+      }
+    }
+  },
+  "LSTM": {
+    "gt": "Long Short-Term Memory",
+    "with_ctx": {
+      "Qwen2.5-1.5B": {
+        "ans": "Long Short-Term Memory",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-3B": {
+        "ans": "Long Short-Term Memory",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-7B": {
+        "ans": "Long Short-Term Memory",
+        "ok": true,
+        "time": 0.1
+      },
+      "LLaMA3.2-3B": {
+        "ans": "Long Short-Term Memory",
+        "ok": true,
+        "time": 0.1
+      },
+      "Gemma3-4B": {
+        "ans": "Long Short-Term Memory",
+        "ok": true,
+        "time": 0.1
+      },
+      "DeepSeek-R1-7B": {
+        "ans": "<think>",
+        "ok": false,
+        "time": 0.5
+      }
+    },
+    "no_ctx": {
+      "Qwen2.5-1.5B": {
+        "ans": "Long Short-Term Memory",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-3B": {
+        "ans": "Long Short-Term Memory",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-7B": {
+        "ans": "Long Short-Term Memory",
+        "ok": true,
+        "time": 0.1
+      },
+      "LLaMA3.2-3B": {
+        "ans": "Long Short-Term Memory",
+        "ok": true,
+        "time": 0.1
+      },
+      "Gemma3-4B": {
+        "ans": "Long Short-Term Memory",
+        "ok": true,
+        "time": 0.1
+      },
+      "DeepSeek-R1-7B": {
+        "ans": "<think>",
+        "ok": false,
+        "time": 0.5
+      }
+    }
+  },
+  "GRU": {
+    "gt": "Gated Recurrent Unit",
+    "with_ctx": {
+      "Qwen2.5-1.5B": {
+        "ans": "Gated Recurrent Unit",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-3B": {
+        "ans": "Gated Recurrent Unit",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-7B": {
+        "ans": "Gated Recurrent Unit",
+        "ok": true,
+        "time": 0.1
+      },
+      "LLaMA3.2-3B": {
+        "ans": "Gated Recurrent Unit",
+        "ok": true,
+        "time": 0.1
+      },
+      "Gemma3-4B": {
+        "ans": "Gated Recurrent Unit",
+        "ok": true,
+        "time": 0.1
+      },
+      "DeepSeek-R1-7B": {
+        "ans": "<think>",
+        "ok": false,
+        "time": 0.5
+      }
+    },
+    "no_ctx": {
+      "Qwen2.5-1.5B": {
+        "ans": "Gated Recurrent Unit",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-3B": {
+        "ans": "Gated Recurrent Unit",
+        "ok": true,
+        "time": 0.1
+      },
+      "Qwen2.5-7B": {
+        "ans": "Gated Recurrent Unit",
+        "ok": true,
+        "time": 0.1
+      },
+      "LLaMA3.2-3B": {
+        "ans": "Global Risk Unit",
+        "ok": false,
+        "time": 0.0
+      },
+      "Gemma3-4B": {
+        "ans": "Guerre Romaine Universelle",
+        "ok": false,
+        "time": 0.1
+      },
+      "DeepSeek-R1-7B": {
+        "ans": "<think>",
+        "ok": false,
+        "time": 0.5
+      }
+    }
+  }
+}

@@ -10,6 +10,8 @@ try:
 except ImportError:
     LatexNodes2Text = None
 
+from .visual_design import ConfidenceVisualizer, TypographyOptimizer, LayoutOptimizer
+
 _unicode_font_path = None
 _unicode_font_checked = False
 
@@ -138,7 +140,8 @@ def add_definition_to_margin(
     definition: str,
     original_location: dict,
     original_content_bboxes: list,
-    using_llm: bool = False,
+    using_llm: bool = False,  # Deprecated - kept for backward compatibility
+    confidence: str = None,  # VIS: Use "HIGH", "MEDIUM", or "LOW"
 ) -> bool:
     page_num = original_location["page"]
     page = doc[page_num]
@@ -161,19 +164,34 @@ def add_definition_to_margin(
     else:
         return False
 
+    # VIS: Map legacy using_llm to confidence levels
+    if confidence is None:
+        confidence = "MEDIUM" if using_llm else "HIGH"
+
     clean_def = " ".join(definition.replace('\r', ' ').replace('\n', ' ').split())
-    full_text = f"{main_word}: {clean_def}"
+
+    # VIS: Use ConfidenceVisualizer for multi-channel encoding
+    full_text = ConfidenceVisualizer.format_annotation(
+        main_word,
+        clean_def,
+        confidence,
+        include_icon=True
+    )
+
+    # VIS: Dynamic font sizing based on text length
+    margin_width = target_rect.width
+    font_size = TypographyOptimizer.get_font_size(full_text, margin_width)
 
     font_path = get_unicode_font_path()
 
     tw = pymupdf.TextWriter(page.rect)
     if font_path:
-        tw.fill_textbox(target_rect, full_text, font=pymupdf.Font(fontfile=font_path), fontsize=5)
+        tw.fill_textbox(target_rect, full_text, font=pymupdf.Font(fontfile=font_path), fontsize=font_size)
     else:
         try:
-            tw.fill_textbox(target_rect, full_text, font=pymupdf.Font(fontname="ubuntu"), fontsize=5)
+            tw.fill_textbox(target_rect, full_text, font=pymupdf.Font(fontname="ubuntu"), fontsize=font_size)
         except Exception:
-            tw.fill_textbox(target_rect, full_text, fontsize=5)
+            tw.fill_textbox(target_rect, full_text, fontsize=font_size)
 
     temp_doc = pymupdf.open()
     temp_page = temp_doc.new_page(width=page.rect.width, height=page.rect.height)
@@ -189,24 +207,71 @@ def add_definition_to_margin(
     if is_margin_space_occupied(page, new_text_bbox, margin_area_to_check):
         return False
 
-    if using_llm:
-        if font_path:
-            page.insert_textbox(target_rect, full_text, fontsize=5, fontfile=font_path, color=(0.5,0, 0))
-        else:
-            try:
-                page.insert_textbox(target_rect, full_text, fontsize=5, fontname="ubuntu", color=(0.5, 0, 0))
-            except Exception:
-                page.insert_textbox(target_rect, full_text, fontsize=5, fontname="helv", color=(0.5, 0, 0))
+    # VIS: Multi-channel visual encoding using TextWriter (correct Unicode + native opacity)
+    # TextWriter correctly sets up ToUnicode CMap, fixing icon extraction issues
+    color = ConfidenceVisualizer.get_color(confidence)
+    alpha = ConfidenceVisualizer.get_alpha(confidence)
+
+    # Re-use the same TextWriter and write directly to page with color + opacity
+    tw_render = pymupdf.TextWriter(page.rect)
+    if font_path:
+        tw_render.fill_textbox(target_rect, full_text, font=pymupdf.Font(fontfile=font_path), fontsize=font_size)
     else:
-        if font_path:
-            page.insert_textbox(target_rect, full_text, fontsize=5, fontfile=font_path, color=(0, 0.5, 0))
-        else:
-            try:
-                page.insert_textbox(target_rect, full_text, fontsize=5, fontname="ubuntu", color=(0, 0.5, 0))
-            except Exception:
-                page.insert_textbox(target_rect, full_text, fontsize=5, fontname="helv", color=(0, 0.5, 0))
+        try:
+            tw_render.fill_textbox(target_rect, full_text, font=pymupdf.Font(fontname="ubuntu"), fontsize=font_size)
+        except Exception:
+            tw_render.fill_textbox(target_rect, full_text, fontsize=font_size)
+
+    tw_render.write_text(page, color=color, opacity=alpha)
 
     return True
+
+
+def add_confidence_legend(doc: pymupdf.Document) -> None:
+    """
+    Add a confidence legend box to the bottom-right corner of the first page.
+    Explains the color/icon encoding used throughout the document.
+    """
+    if len(doc) == 0:
+        return
+
+    page = doc[0]
+    font_path = get_unicode_font_path()
+    font_size = 5.0
+
+    entries = [
+        ((0.0, 0.45, 0.0), "Green  Extracted from paper"),
+        ((0.7, 0.35, 0.0), "≈  Orange  LLM-inferred"),
+        ((0.55, 0.0, 0.0), "?  Red  Uncertain"),
+    ]
+
+    legend_w = 100
+    legend_h = 36
+    margin = 6
+    x0 = page.rect.width - legend_w - margin
+    y0 = page.rect.height - legend_h - margin
+
+    box_rect = pymupdf.Rect(x0 - 3, y0 - 3, x0 + legend_w + 3, y0 + legend_h + 3)
+    page.draw_rect(box_rect, color=(0.7, 0.7, 0.7), fill=(1.0, 1.0, 1.0), width=0.4)
+
+    tw_title = pymupdf.TextWriter(page.rect)
+    title_rect = pymupdf.Rect(x0, y0, x0 + legend_w, y0 + font_size + 2)
+    if font_path:
+        tw_title.fill_textbox(title_rect, "GlossVis Confidence:", font=pymupdf.Font(fontfile=font_path), fontsize=font_size - 0.5)
+    else:
+        tw_title.fill_textbox(title_rect, "GlossVis Confidence:", fontsize=font_size - 0.5)
+    tw_title.write_text(page, color=(0.15, 0.15, 0.15))
+
+    y_entry = y0 + font_size + 4
+    for color, label in entries:
+        tw = pymupdf.TextWriter(page.rect)
+        entry_rect = pymupdf.Rect(x0, y_entry, x0 + legend_w, y_entry + font_size + 2)
+        if font_path:
+            tw.fill_textbox(entry_rect, label, font=pymupdf.Font(fontfile=font_path), fontsize=font_size)
+        else:
+            tw.fill_textbox(entry_rect, label, fontsize=font_size)
+        tw.write_text(page, color=color)
+        y_entry += font_size + 2
 
 
 def add_symbol_definition_to_margin(
@@ -217,7 +282,8 @@ def add_symbol_definition_to_margin(
     description: str,
     original_location: dict,
     original_content_bboxes: list,
-    is_inferred: bool = False,
+    is_inferred: bool = False,  # Deprecated - kept for backward compatibility
+    confidence: str = None,  # VIS: Use "HIGH", "MEDIUM", or "LOW"
 ) -> bool:
     if meaning in ["NOT_FOUND", "", None]:
         return False
@@ -247,6 +313,10 @@ def add_symbol_definition_to_margin(
     has_desc = description and description.upper() != "NOT_FOUND" and description.lower() != "none"
     clean_desc = " ".join(description.replace('\r', ' ').replace('\n', ' ').split()) if has_desc else ""
 
+    # VIS: Map legacy is_inferred to confidence levels
+    if confidence is None:
+        confidence = "MEDIUM" if is_inferred else "HIGH"
+
     img_bytes = None
     pdf_img_w = 0
     pdf_img_h = 0
@@ -260,7 +330,9 @@ def add_symbol_definition_to_margin(
 
         fig = plt.figure(figsize=(0.1, 0.1))
         try:
-            fig.text(0, 0, math_str, fontsize=10, ha='left', va='bottom', color='#008000')
+            # VIS: Match symbol color to text color based on confidence level
+            symbol_color = ConfidenceVisualizer.get_color(confidence)
+            fig.text(0, 0, math_str, fontsize=10, ha='left', va='bottom', color=symbol_color)
             buf = io.BytesIO()
             plt.savefig(buf, format='png', transparent=True, bbox_inches='tight', pad_inches=0.01, dpi=300)
             img_bytes = buf.getvalue()
@@ -290,7 +362,10 @@ def add_symbol_definition_to_margin(
             target_rect.y0 + y_offset + pdf_img_h
         )
         
-        text_str = f"{clean_meaning}: {clean_desc}" if has_desc else f"{clean_meaning}"
+        # icon prefix: empty for HIGH (extracted), ≈/? for inferred
+        icon = ConfidenceVisualizer.get_icon(confidence) if confidence else "≈"
+        base_str = f"{clean_meaning}: {clean_desc}" if has_desc else f"{clean_meaning}"
+        text_str = f"{icon} {base_str}".strip() if icon else base_str
         text_rect = pymupdf.Rect(img_rect.x1 + 3, target_rect.y0, target_rect.x1, target_rect.y1)
     else:
         display_symbol = symbol
@@ -301,7 +376,9 @@ def add_symbol_definition_to_margin(
                 display_symbol = result if result and '%' not in result else symbol
             except Exception:
                 pass
-        text_str = f"[{display_symbol}] {clean_meaning}: {clean_desc}" if has_desc else f"[{display_symbol}] {clean_meaning}"
+        icon = ConfidenceVisualizer.get_icon(confidence) if confidence else "≈"
+        base_str = f"[{display_symbol}] {clean_meaning}: {clean_desc}" if has_desc else f"[{display_symbol}] {clean_meaning}"
+        text_str = f"{icon} {base_str}".strip() if icon else base_str
         text_rect = target_rect
 
     if font_path:
@@ -326,18 +403,28 @@ def add_symbol_definition_to_margin(
 
     if is_margin_space_occupied(page, total_bbox, margin_area_to_check):
         return False
-        
+
+    # VIS: Multi-channel visual encoding
+    color = ConfidenceVisualizer.get_color(confidence)
+    alpha = ConfidenceVisualizer.get_alpha(confidence)
+
+    # VIS: Dynamic font sizing
+    margin_width = text_rect.width
+    font_size = TypographyOptimizer.get_font_size(text_str, margin_width)
+
     if img_bytes:
         page.insert_image(img_rect, stream=img_bytes)
-        
-    color = (0.5, 0, 0) if is_inferred else (0, 0.5, 0)
 
+    # Use TextWriter for correct Unicode rendering (icon glyphs + ToUnicode CMap)
+    tw_render = pymupdf.TextWriter(page.rect)
     if font_path:
-        page.insert_textbox(text_rect, text_str, fontsize=5, fontfile=font_path, color=color)
+        tw_render.fill_textbox(text_rect, text_str, font=pymupdf.Font(fontfile=font_path), fontsize=font_size)
     else:
         try:
-            page.insert_textbox(text_rect, text_str, fontsize=5, fontname="ubuntu", color=color)
+            tw_render.fill_textbox(text_rect, text_str, font=pymupdf.Font(fontname="ubuntu"), fontsize=font_size)
         except Exception:
-            page.insert_textbox(text_rect, text_str, fontsize=5, fontname="helv", color=color)
+            tw_render.fill_textbox(text_rect, text_str, fontsize=font_size)
+
+    tw_render.write_text(page, color=color, opacity=alpha)
 
     return True

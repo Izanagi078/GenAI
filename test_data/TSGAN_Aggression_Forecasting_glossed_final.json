@@ -1,0 +1,654 @@
+{
+  "citations": [
+    {
+      "text": "(Henneberger, Coffman, and Gest 2017)",
+      "definition": "The effect of having aggressive friends on aggressive behavior in childhood: Using propensity scores to strengthen causal inference (2017)",
+      "page": 0,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "(Bai et al. 2020)",
+      "definition": "Adaptive Graph Convolutional Recurrent Network for Traffic Forecasting (2020)",
+      "page": 0,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "(Birkley and Eckhardt 2015)",
+      "definition": "Anger, Hostility, Internalizing Negative Emotions, and Intimate Partner Violence Perpetration: A Meta-Analytic Review (2015)",
+      "page": 0,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "(Mane, Kundu, and Sharma 2025)",
+      "definition": "A Survey on Online Aggression: Content Detection and Behavioral Analysis on Social Media Platforms (2025)",
+      "page": 1,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "(Thakoor et al. 2022)",
+      "definition": "Large-scale representation learning on graphs via bootstrapping (2022)",
+      "page": 2,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "(e.g., GAT (Velickovic et al. 2017)",
+      "definition": "Graph Attention Networks (2017)",
+      "page": 3,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "(Birkley and Eckhardt 2015)",
+      "definition": "Anger, Hostility, Internalizing Negative Emotions, and Intimate Partner Violence Perpetration: A Meta-Analytic Review (2015)",
+      "page": 3,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "(Mane et al. 2025)",
+      "definition": "A Survey on Online Aggression: Content Detection and Behavioral Analysis on Social Media Platforms (2025)",
+      "page": 3,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "(Terizi et al. 2021)",
+      "definition": "Modeling Aggression Propagation on Social Media (2021)",
+      "page": 4,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "(Birkley and Eckhardt 2015; Zheng et al. 2020)",
+      "definition": "Anger, Hostility, Internalizing Negative Emotions, and Intimate Partner Violence Perpetration: A Meta-Analytic Review (2015)",
+      "page": 4,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "(Mane, Kundu, and Sharma 2025)",
+      "definition": "A Survey on Online Aggression: Content Detection and Behavioral Analysis on Social Media Platforms (2025)",
+      "page": 4,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "(Makridakis and Hibon 1997)",
+      "definition": "ARMA models and the Box-Jenkins methodology (1997)",
+      "page": 4,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "(Hochreiter and Schmidhuber 1997)",
+      "definition": "Long Short-Term Memory (1997)",
+      "page": 4,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "(Li et al. 2018)",
+      "definition": "Diffusion Convolutional Recurrent Neural Network: Data-Driven Traffic Forecasting (2018)",
+      "page": 4,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "(Guo et al. 2019)",
+      "definition": "At- tention based spatial-temporal graph convolutional networks for traffic flow forecasting (2019)",
+      "page": 4,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "(Zheng et al. 2020)",
+      "definition": "GMAN: A Graph Multi-Attention Network for Traffic Prediction (2020)",
+      "page": 4,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "(Akter et al. 2022)",
+      "definition": "Deep Learning Approach for Classifying the Aggressive Comments on Social Media: Machine Translated Data Vs Real Life Data (2022)",
+      "page": 6,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "(Mane, Kundu, and Sharma 2025)",
+      "definition": "A Survey on Online Aggression: Content Detection and Behavioral Analysis on Social Media Platforms (2025)",
+      "page": 6,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "Akter et al. (2022)",
+      "definition": "Deep Learning Approach for Classifying the Aggressive Comments on Social Media: Machine Translated Data Vs Real Life Data (2022)",
+      "page": 6,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "Mane et al. (2023)",
+      "definition": "A Survey on Online Aggression: Content Detection and Behavioral Analysis on Social Media Platforms (2023)",
+      "page": 6,
+      "confidence": "HIGH"
+    }
+  ],
+  "abbreviations": [
+    {
+      "text": "TSGAN",
+      "definition": "Temporal Social Graph Attention Network",
+      "page": 0,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "AAAI",
+      "definition": "Artificial Intelligence and Applications",
+      "page": 0,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "TSGAN",
+      "definition": "Temporal Social Graph Attention Network",
+      "page": 1,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "ASTAM",
+      "definition": "Adaptive Socio-temporal Attention Module",
+      "page": 1,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "AGI",
+      "definition": "Aggression Intensity",
+      "page": 1,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "ASTAM",
+      "definition": "Adaptive Socio-temporal Attention Module",
+      "page": 2,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "TSGAN",
+      "definition": "Temporal Social Graph Attention Network",
+      "page": 2,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "AGI",
+      "definition": "Aggression Intensity",
+      "page": 2,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "CTA",
+      "definition": "Cross-temporal Attention",
+      "page": 2,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "GNCE",
+      "definition": "Global Network Context Embedding",
+      "page": 2,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "BGRL",
+      "definition": "Bootstrapped Graph Latents",
+      "page": 2,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "SIA",
+      "definition": "Social Influence Attention",
+      "page": 2,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "TDA",
+      "definition": "Temporal Dynamics Attention",
+      "page": 2,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "TDA",
+      "definition": "Temporal Dynamics Attention",
+      "page": 3,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "IAG",
+      "definition": "Integration Attention Gateway",
+      "page": 3,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "SIA",
+      "definition": "Social Influence Attention",
+      "page": 3,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "GNCE",
+      "definition": "Global Network Context Embedding",
+      "page": 3,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "SIA",
+      "definition": "Social Influence Attention",
+      "page": 4,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "IAG",
+      "definition": "Integration Attention Gateway",
+      "page": 4,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "CTA",
+      "definition": "Cross-temporal Attention",
+      "page": 4,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "GNCE",
+      "definition": "Global Network Context Embedding",
+      "page": 4,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "TSGAN",
+      "definition": "Temporal Social Graph Attention Network",
+      "page": 4,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "ASTAM",
+      "definition": "Adaptive Socio-temporal Attention Module",
+      "page": 4,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "SMPD",
+      "definition": "Social Media Prediction Dataset",
+      "page": 4,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "MAE",
+      "definition": "Mean Absolute Error",
+      "page": 5,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "ARIMA",
+      "definition": "Auto-Regressive Integrated Moving Average",
+      "page": 5,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "RNN",
+      "definition": "recurrent neural network",
+      "page": 5,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "LSTM",
+      "definition": "Long Short-Term Memory",
+      "page": 5,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "STGCN",
+      "definition": "Spatial Temporal Graph Convolutional Network",
+      "page": 5,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "TSGAN",
+      "definition": "Temporal Social Graph Attention Network",
+      "page": 5,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "GRU",
+      "definition": "Gated Recurrent Unit",
+      "page": 5,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "DCRNN",
+      "definition": "Deep Convolutional Recurrent Neural Network",
+      "page": 5,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "SMPD",
+      "definition": "Social Media Prediction Dataset",
+      "page": 5,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "ASTAM",
+      "definition": "Adaptive Socio-temporal Attention Module",
+      "page": 5,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "IAG",
+      "definition": "Integration Attention Gateway",
+      "page": 5,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "SIA",
+      "definition": "Social Influence Attention",
+      "page": 5,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "TDA",
+      "definition": "Temporal Dynamics Attention",
+      "page": 5,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "CTA",
+      "definition": "Cross-temporal Attention",
+      "page": 5,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "GAN",
+      "definition": "Generative Adversarial Network",
+      "page": 5,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "AGI",
+      "definition": "Aggression Intensity",
+      "page": 6,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "TSGAN",
+      "definition": "Temporal Social Graph Attention Network",
+      "page": 6,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "MAE",
+      "definition": "Mean Absolute Error",
+      "page": 6,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "ARIMA",
+      "definition": "Auto-Regressive Integrated Moving Average",
+      "page": 6,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "GRU",
+      "definition": "Gated Recurrent Unit",
+      "page": 6,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "LSTM",
+      "definition": "Long Short-Term Memory",
+      "page": 6,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "RNN",
+      "definition": "recurrent neural network",
+      "page": 6,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "STGCN",
+      "definition": "Spatial Temporal Graph Convolutional Network",
+      "page": 6,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "BERT",
+      "definition": "BERT",
+      "page": 6,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "IEEE",
+      "definition": "Institute of Electrical and Electronics Engineers",
+      "page": 7,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "AAAI",
+      "definition": "Artificial Intelligence and Applications",
+      "page": 7,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "ACM",
+      "definition": "Association for Computing Machinery",
+      "page": 7,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "RNN",
+      "definition": "recurrent neural network",
+      "page": 7,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "SIGIR",
+      "definition": "Search Information Retrieval and IR",
+      "page": 7,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "ISBN",
+      "definition": "International Standard Book Number",
+      "page": 7,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "BERT",
+      "definition": "BERT",
+      "page": 7,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "ICLR",
+      "definition": "International Conference on Learning Representations",
+      "page": 8,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "NIPS",
+      "definition": "Neural Information Processing Systems",
+      "page": 8,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "IEEE",
+      "definition": "Institute of Electrical and Electronics Engineers",
+      "page": 8,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "ACM",
+      "definition": "Association for Computing Machinery",
+      "page": 8,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "IJCAI",
+      "definition": "International Joint Conference on Artificial Intelligence",
+      "page": 8,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "GMAN",
+      "definition": "Graph Neural Attention Network",
+      "page": 8,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "AAAI",
+      "definition": "Artificial Intelligence and Applications",
+      "page": 8,
+      "confidence": "MEDIUM"
+    }
+  ],
+  "symbols": [
+    {
+      "text": "∈",
+      "meaning": "membership",
+      "definition": "membership: Membership indicator; whether an element belongs to a specified set or not.",
+      "page": 1,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "\\omega",
+      "meaning": "notion",
+      "definition": "notion: a measure of similarity or alignment between elements in a dataset.",
+      "page": 1,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "∈",
+      "meaning": "membership",
+      "definition": "membership: Membership indicator; whether an element belongs to a specified set or not.",
+      "page": 2,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "\\Theta",
+      "meaning": "parameter",
+      "definition": "parameter: The parameter in the error function.",
+      "page": 2,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "λ",
+      "meaning": "node embedding",
+      "definition": "node embedding: Vector representation of a user's local context within the network.",
+      "page": 2,
+      "confidence": "LOW"
+    },
+    {
+      "text": "α",
+      "meaning": "attention coefficient",
+      "definition": "attention coefficient: A measure that weights the importance of different inputs in a neural network model.",
+      "page": 3,
+      "confidence": "LOW"
+    },
+    {
+      "text": "⊆",
+      "meaning": "subset",
+      "definition": "subset: The symbol '⊆' denotes that one set is a subset of another.",
+      "page": 3,
+      "confidence": "LOW"
+    },
+    {
+      "text": "∈",
+      "meaning": "membership",
+      "definition": "membership: Membership indicator; whether an element belongs to a specified set or not.",
+      "page": 3,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "∥",
+      "meaning": "Vector Concatenation",
+      "definition": "Vector Concatenation: A method of combining vectors to create a new vector.",
+      "page": 3,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "λ",
+      "meaning": "node embedding",
+      "definition": "node embedding: Vector representation of a user's local context within the network.",
+      "page": 3,
+      "confidence": "LOW"
+    },
+    {
+      "text": "γ",
+      "meaning": "decay rate",
+      "definition": "decay rate: Controls the exponential decay factor, indicating the speed at which attention to past behaviors decreases.",
+      "page": 3,
+      "confidence": "LOW"
+    },
+    {
+      "text": "\\longrightarrow",
+      "meaning": "attention weight",
+      "definition": "attention weight: The importance of an attention mechanism at a specific time step based on the passage difference and decay rate.",
+      "page": 3,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "γ",
+      "meaning": "decay rate",
+      "definition": "decay rate: Controls the exponential decay factor, indicating the speed at which attention to past behaviors decreases.",
+      "page": 4,
+      "confidence": "LOW"
+    },
+    {
+      "text": "∈",
+      "meaning": "membership",
+      "definition": "membership: Membership indicator; whether an element belongs to a specified set or not.",
+      "page": 4,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "\\slash",
+      "meaning": "division symbol",
+      "definition": "division symbol: extracted",
+      "page": 4,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "\\otimes",
+      "meaning": "multiplication symbol",
+      "definition": "multiplication symbol: inferred",
+      "page": 4,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "\\r",
+      "meaning": "not found",
+      "definition": "not found",
+      "page": 4,
+      "confidence": "LOW"
+    },
+    {
+      "text": "\\mid",
+      "meaning": "indicates comparison or relevance",
+      "definition": "indicates comparison or relevance: The vertical bar symbolizes the comparison between two elements.",
+      "page": 5,
+      "confidence": "MEDIUM"
+    },
+    {
+      "text": "\\binom",
+      "meaning": "combination function",
+      "definition": "combination function",
+      "page": 5,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "δ",
+      "meaning": "decay rate",
+      "definition": "decay rate: A learnable parameter controlling the exponential decay of temporal attention in TDA.",
+      "page": 6,
+      "confidence": "LOW"
+    },
+    {
+      "text": "∈",
+      "meaning": "membership",
+      "definition": "membership: Membership indicator; whether an element belongs to a specified set or not.",
+      "page": 6,
+      "confidence": "HIGH"
+    },
+    {
+      "text": "∥",
+      "meaning": "Vector Concatenation",
+      "definition": "Vector Concatenation: A method of combining vectors to create a new vector.",
+      "page": 6,
+      "confidence": "HIGH"
+    }
+  ]
+}

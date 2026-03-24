@@ -1,0 +1,1762 @@
+{
+  "regex": [
+    {
+      "condition": "GlossVis-Regex",
+      "paper": "TSGAN (AAAI-25)",
+      "domain": "Social Computing / Aggression Forecasting",
+      "pages": 9,
+      "ema": 1.0,
+      "token_f1": 1.0,
+      "detection": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 17,
+        "fp": 0,
+        "fn": 0
+      },
+      "ece": 0.050000000000000044,
+      "brier": 0.0025000000000000044,
+      "latency_ms": 109.70746353268623,
+      "n_inline": 17,
+      "n_used_only": 6,
+      "extracted": {
+        "TSGAN": "Temporal Social Graph Attention Network",
+        "ASTAM": "Adaptive Socio-temporal Attention Module",
+        "GNCE": "Global Network Context Embedding",
+        "AGI": "Aggression Intensity",
+        "BGRL": "Bootstrapped Graph Latents",
+        "SIA": "Social Influence Attention",
+        "TDA": "Temporal Dynamics Attention",
+        "IAG": "Integration Attention Gateway",
+        "CTA": "Cross-temporal Attention",
+        "MAE": "Mean Absolute Error",
+        "RMSE": "Root Mean Squared Error",
+        "SMPD": "Social Media Prediction Dataset",
+        "EMNLP": "Empirical Methods in Natural Language Processing",
+        "IJSSCI": "International Journal of Software Science and Computational Intelligence",
+        "ACL": "Association for Computational Linguistics",
+        "ICLR": "International Conference on Learning Representations",
+        "IJCAI": "International Joint Conference on Artificial Intelligence"
+      },
+      "correct_flags": {
+        "TSGAN": 1,
+        "ASTAM": 1,
+        "GNCE": 1,
+        "AGI": 1,
+        "BGRL": 1,
+        "SIA": 1,
+        "TDA": 1,
+        "IAG": 1,
+        "CTA": 1,
+        "MAE": 1,
+        "RMSE": 1,
+        "SMPD": 1,
+        "ACL": 1,
+        "ICLR": 1,
+        "IJCAI": 1,
+        "EMNLP": 1,
+        "IJSSCI": 1
+      }
+    },
+    {
+      "condition": "GlossVis-Regex",
+      "paper": "Transformer (NeurIPS-17)",
+      "domain": "Natural Language Processing / Machine Translation",
+      "pages": 15,
+      "ema": 1.0,
+      "token_f1": 1.0,
+      "detection": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "ece": 0.050000000000000044,
+      "brier": 0.0025000000000000044,
+      "latency_ms": 112.50017583370209,
+      "n_inline": 2,
+      "n_used_only": 7,
+      "extracted": {
+        "WSJ": "Wall Street Journal",
+        "ICLR": "International Conference on Learning Representations"
+      },
+      "correct_flags": {
+        "WSJ": 1,
+        "ICLR": 1
+      }
+    },
+    {
+      "condition": "GlossVis-Regex",
+      "paper": "BERT (NAACL-19)",
+      "domain": "Natural Language Processing / Language Understanding",
+      "pages": 16,
+      "ema": 1.0,
+      "token_f1": 1.0,
+      "detection": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 8,
+        "fp": 0,
+        "fn": 0
+      },
+      "ece": 0.050000000000000044,
+      "brier": 0.0025000000000000044,
+      "latency_ms": 105.88204115629196,
+      "n_inline": 8,
+      "n_used_only": 6,
+      "extracted": {
+        "NSP": "Next Sentence Prediction",
+        "QA": "Question Answering",
+        "NLI": "Natural Language Inference",
+        "GLUE": "General Language Understanding Evaluation",
+        "SWAG": "Situations with Adversarial Generations",
+        "NER": "Named Entity Recognition",
+        "EMNLP": "Empirical Methods in Natural Language Processing",
+        "MLM": "Masked Language Model"
+      },
+      "correct_flags": {
+        "NSP": 1,
+        "QA": 1,
+        "NLI": 1,
+        "GLUE": 1,
+        "SWAG": 1,
+        "NER": 1,
+        "MLM": 1,
+        "EMNLP": 1
+      }
+    },
+    {
+      "condition": "GlossVis-Regex",
+      "paper": "ViT (ICLR-21)",
+      "domain": "Computer Vision / Image Classification",
+      "pages": 22,
+      "ema": 0.8333333333333334,
+      "token_f1": 0.8333333333333334,
+      "detection": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 6,
+        "fp": 0,
+        "fn": 0
+      },
+      "ece": 0.11666666666666647,
+      "brier": 0.1525,
+      "latency_ms": 152.70591154694557,
+      "n_inline": 6,
+      "n_used_only": 4,
+      "extracted": {
+        "NLP": "Natural Language Processing",
+        "VIT": "Vision Transformer",
+        "CVPR": "Computer Vision and Pattern Recognition",
+        "MSA": "Multihead Self-attention",
+        "MLP": "Multi-layer Perceptron",
+        "GAP": "Globally Average-pooling"
+      },
+      "correct_flags": {
+        "NLP": 1,
+        "VIT": 1,
+        "MLP": 1,
+        "MSA": 1,
+        "GAP": 0,
+        "CVPR": 1
+      }
+    },
+    {
+      "condition": "GlossVis-Regex",
+      "paper": "ResNet (CVPR-16)",
+      "domain": "Computer Vision / Deep Residual Learning",
+      "pages": 12,
+      "ema": 1.0,
+      "token_f1": 1.0,
+      "detection": {
+        "precision": 0.8,
+        "recall": 1.0,
+        "f1": 0.888888888888889,
+        "tp": 4,
+        "fp": 1,
+        "fn": 0
+      },
+      "ece": 0.050000000000000044,
+      "brier": 0.0025000000000000044,
+      "latency_ms": 125.53532794117928,
+      "n_inline": 4,
+      "n_used_only": 5,
+      "extracted": {
+        "SGD": "Stochastic Gradient Descent",
+        "BN": "Batch Normalization",
+        "VOC": "Visual Object Classes",
+        "NMS": "Non-maximum Suppression",
+        "RPN": "Proposal Network"
+      },
+      "correct_flags": {
+        "BN": 1,
+        "SGD": 1,
+        "NMS": 1,
+        "VOC": 1
+      }
+    },
+    {
+      "condition": "GlossVis-Regex",
+      "paper": "U-Net (MICCAI-15)",
+      "domain": "Medical Image Segmentation",
+      "pages": 8,
+      "ema": 1.0,
+      "token_f1": 1.0,
+      "detection": {
+        "precision": 0.6666666666666666,
+        "recall": 1.0,
+        "f1": 0.8,
+        "tp": 2,
+        "fp": 1,
+        "fn": 0
+      },
+      "ece": 0.050000000000000044,
+      "brier": 0.0025000000000000044,
+      "latency_ms": 35.13474389910698,
+      "n_inline": 2,
+      "n_used_only": 6,
+      "extracted": {
+        "VNC": "Ventral Nerve Cord",
+        "DIC": "Differential Interference Contrast",
+        "CVPR": "Computer Vision and Pattern Recognition"
+      },
+      "correct_flags": {
+        "DIC": 1,
+        "VNC": 1
+      }
+    },
+    {
+      "condition": "GlossVis-Regex",
+      "paper": "PPO (arXiv-17)",
+      "domain": "Reinforcement Learning / Policy Optimization",
+      "pages": 12,
+      "ema": 1.0,
+      "token_f1": 1.0,
+      "detection": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 4,
+        "fp": 0,
+        "fn": 0
+      },
+      "ece": 0.050000000000000044,
+      "brier": 0.0025000000000000044,
+      "latency_ms": 186.01273000240326,
+      "n_inline": 4,
+      "n_used_only": 6,
+      "extracted": {
+        "PPO": "Proximal Policy Optimization",
+        "TRPO": "Trust Region Policy Optimization",
+        "CEM": "Cross-entropy Method",
+        "IROS": "Intelligent Robots and Systems"
+      },
+      "correct_flags": {
+        "PPO": 1,
+        "TRPO": 1,
+        "CEM": 1,
+        "IROS": 1
+      }
+    },
+    {
+      "condition": "GlossVis-Regex",
+      "paper": "GCN (ICLR-17)",
+      "domain": "Graph Neural Networks / Semi-supervised Learning",
+      "pages": 14,
+      "ema": 1.0,
+      "token_f1": 1.0,
+      "detection": {
+        "precision": 0.8888888888888888,
+        "recall": 1.0,
+        "f1": 0.9411764705882353,
+        "tp": 8,
+        "fp": 1,
+        "fn": 0
+      },
+      "ece": 0.050000000000000044,
+      "brier": 0.0025000000000000044,
+      "latency_ms": 109.44816842675209,
+      "n_inline": 8,
+      "n_used_only": 5,
+      "extracted": {
+        "CIFAR": "Canadian Institute for Advanced Research",
+        "GCN": "Graph Convolutional Network",
+        "LP": "Label Propagation",
+        "ICA": "Iterative Classification Algorithm",
+        "NIPS": "Neural Information Processing Systems",
+        "JMLR": "Journal of Machine Learning Research",
+        "ICLR": "International Conference on Learning Representations",
+        "CVPR": "Computer Vision and Pattern Recognition",
+        "ICML": "International Conference on Machine Learning"
+      },
+      "correct_flags": {
+        "GCN": 1,
+        "ICA": 1,
+        "LP": 1,
+        "NIPS": 1,
+        "ICLR": 1,
+        "ICML": 1,
+        "JMLR": 1,
+        "CVPR": 1
+      }
+    },
+    {
+      "condition": "GlossVis-Regex",
+      "paper": "DDPM (NeurIPS-20)",
+      "domain": "Generative Models / Denoising Diffusion",
+      "pages": 25,
+      "ema": 1.0,
+      "token_f1": 1.0,
+      "detection": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "ece": 0.050000000000000044,
+      "brier": 0.0025000000000000044,
+      "latency_ms": 121.61104381084442,
+      "n_inline": 2,
+      "n_used_only": 7,
+      "extracted": {
+        "TFRC": "Tensorflow Research Cloud",
+        "ECCV": "European Conference on Computer Vision"
+      },
+      "correct_flags": {
+        "ECCV": 1,
+        "TFRC": 1
+      }
+    },
+    {
+      "condition": "GlossVis-Regex",
+      "paper": "Faster RCNN (NeurIPS-15)",
+      "domain": "Computer Vision / Object Detection",
+      "pages": 14,
+      "ema": 1.0,
+      "token_f1": 1.0,
+      "detection": {
+        "precision": 0.9333333333333333,
+        "recall": 1.0,
+        "f1": 0.9655172413793104,
+        "tp": 14,
+        "fp": 1,
+        "fn": 0
+      },
+      "ece": 0.050000000000000044,
+      "brier": 0.0025000000000000044,
+      "latency_ms": 108.48668962717056,
+      "n_inline": 14,
+      "n_used_only": 5,
+      "extracted": {
+        "RPN": "Region Proposal Network",
+        "FCN": "Fully Convolutional Network",
+        "SGD": "Stochastic Gradient Descent",
+        "NMS": "Non-maximum Suppression",
+        "SS": "Selective Search",
+        "EB": "For Edgeboxes",
+        "ECCV": "European Conference on Computer Vision",
+        "ICCV": "International Conference on Computer Vision",
+        "ICLR": "International Conference on Learning Representations",
+        "IJCV": "International Journal of Computer Vision",
+        "CVPR": "Computer Vision and Pattern Recognition",
+        "TPAMI": "Transactions on Pattern Analysis and Machine Intelligence",
+        "NIPS": "Neural Information Processing Systems",
+        "BMVC": "British Machine Vision Conference",
+        "ICML": "International Conference on Machine Learning"
+      },
+      "correct_flags": {
+        "RPN": 1,
+        "FCN": 1,
+        "NMS": 1,
+        "SGD": 1,
+        "SS": 1,
+        "TPAMI": 1,
+        "NIPS": 1,
+        "CVPR": 1,
+        "ICCV": 1,
+        "ECCV": 1,
+        "ICML": 1,
+        "ICLR": 1,
+        "IJCV": 1,
+        "BMVC": 1
+      }
+    },
+    {
+      "condition": "GlossVis-Regex",
+      "paper": "Swin (ICCV-21)",
+      "domain": "Computer Vision / Hierarchical Vision Transformer",
+      "pages": 14,
+      "ema": 0.625,
+      "token_f1": 0.7083333333333334,
+      "detection": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 8,
+        "fp": 0,
+        "fn": 0
+      },
+      "ece": 0.32499999999999996,
+      "brier": 0.33999999999999997,
+      "latency_ms": 138.57803121209145,
+      "n_inline": 8,
+      "n_used_only": 7,
+      "extracted": {
+        "NLP": "Natural Language Processing",
+        "FPN": "Feature Pyramid Networks",
+        "MSA": "Self Attention",
+        "LN": "A Layernorm",
+        "EMA": "Exponential Moving Average",
+        "ICCV": "International Conference on Computer Vision",
+        "ECCV": "European Conference on Computer Vision",
+        "CVPR": "Computer Vision and Pattern Recognition"
+      },
+      "correct_flags": {
+        "EMA": 1,
+        "FPN": 0,
+        "LN": 0,
+        "MSA": 0,
+        "NLP": 1,
+        "CVPR": 1,
+        "ECCV": 1,
+        "ICCV": 1
+      }
+    },
+    {
+      "condition": "GlossVis-Regex",
+      "paper": "EfficientNet (ICML-19)",
+      "domain": "Computer Vision / Efficient Model Scaling",
+      "pages": 11,
+      "ema": 1.0,
+      "token_f1": 1.0,
+      "detection": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 1,
+        "fp": 0,
+        "fn": 0
+      },
+      "ece": 0.050000000000000044,
+      "brier": 0.0025000000000000044,
+      "latency_ms": 81.70963451266289,
+      "n_inline": 1,
+      "n_used_only": 7,
+      "extracted": {
+        "CAM": "Class Activation Map"
+      },
+      "correct_flags": {
+        "CAM": 1
+      }
+    }
+  ],
+  "full": [
+    {
+      "condition": "GlossVis-Full",
+      "paper": "TSGAN (AAAI-25)",
+      "ema": 0.9565217391304348,
+      "token_f1": 0.9832775919732442,
+      "detection": {
+        "precision": 0.7391304347826086,
+        "recall": 1.0,
+        "f1": 0.85,
+        "tp": 17,
+        "fp": 6,
+        "fn": 0
+      },
+      "ece": 0.08478260869565221,
+      "brier": 0.04684782608695653,
+      "latency_ms": 7680.301651358604,
+      "results": {
+        "TSGAN": {
+          "pred": "Temporal Social Graph Attention Network",
+          "gold": "Temporal Social Graph Attention Network",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "ASTAM": {
+          "pred": "Adaptive Socio-temporal Attention Module",
+          "gold": "Adaptive Socio-temporal Attention Module",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "GNCE": {
+          "pred": "Global Network Context Embedding",
+          "gold": "Global Network Context Embedding",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "AGI": {
+          "pred": "Aggression Intensity",
+          "gold": "Aggression Intensity",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "BGRL": {
+          "pred": "Bootstrapped Graph Latents",
+          "gold": "Bootstrapped Graph Latents",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "SIA": {
+          "pred": "Social Influence Attention",
+          "gold": "Social Influence Attention",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "TDA": {
+          "pred": "Temporal Dynamics Attention",
+          "gold": "Temporal Dynamics Attention",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "IAG": {
+          "pred": "Integration Attention Gateway",
+          "gold": "Integration Attention Gateway",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "CTA": {
+          "pred": "Cross-temporal Attention",
+          "gold": "Cross-temporal Attention",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "MAE": {
+          "pred": "Mean Absolute Error",
+          "gold": "Mean Absolute Error",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "RMSE": {
+          "pred": "Root Mean Squared Error",
+          "gold": "Root Mean Squared Error",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "SMPD": {
+          "pred": "Social Media Prediction Dataset",
+          "gold": "Social Media Prediction Dataset",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "ACL": {
+          "pred": "Association for Computational Linguistics",
+          "gold": "Association for Computational Linguistics",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "ICLR": {
+          "pred": "International Conference on Learning Representations",
+          "gold": "International Conference on Learning Representations",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "IJCAI": {
+          "pred": "International Joint Conference on Artificial Intelligence",
+          "gold": "International Joint Conference on Artificial Intelligence",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "EMNLP": {
+          "pred": "Empirical Methods in Natural Language Processing",
+          "gold": "Empirical Methods in Natural Language Processing",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "IJSSCI": {
+          "pred": "International Journal of Software Science and Computational Intelligence",
+          "gold": "International Journal of Software Science and Computational Intelligence",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "GNN": {
+          "pred": "graph neural network",
+          "gold": "Graph Neural Network",
+          "conf": "MEDIUM",
+          "source": "llm_rag"
+        },
+        "LSTM": {
+          "pred": "Long Short-Term Memory",
+          "gold": "Long Short-Term Memory",
+          "conf": "MEDIUM",
+          "source": "llm_rag"
+        },
+        "GRU": {
+          "pred": "Gated Recurrent Unit",
+          "gold": "Gated Recurrent Unit",
+          "conf": "MEDIUM",
+          "source": "llm_rag"
+        },
+        "RNN": {
+          "pred": "Recurrent Neural Network",
+          "gold": "Recurrent Neural Network",
+          "conf": "MEDIUM",
+          "source": "llm_rag"
+        },
+        "GAN": {
+          "pred": "Generative Adversarial Network",
+          "gold": "Generative Adversarial Network",
+          "conf": "MEDIUM",
+          "source": "llm_rag"
+        },
+        "AAAI": {
+          "pred": "Association for Automation and Artificial Intelligence",
+          "gold": "Association for the Advancement of Artificial Intelligence",
+          "conf": "MEDIUM",
+          "source": "llm_rag"
+        }
+      }
+    },
+    {
+      "condition": "GlossVis-Full",
+      "paper": "BERT (NAACL-19)",
+      "ema": 0.8571428571428571,
+      "token_f1": 0.8571428571428571,
+      "detection": {
+        "precision": 0.5714285714285714,
+        "recall": 1.0,
+        "f1": 0.7272727272727273,
+        "tp": 8,
+        "fp": 6,
+        "fn": 0
+      },
+      "ece": 0.03571428571428571,
+      "brier": 0.09678571428571428,
+      "latency_ms": 2688.9241598546505,
+      "results": {
+        "NSP": {
+          "pred": "Next Sentence Prediction",
+          "gold": "Next Sentence Prediction",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "QA": {
+          "pred": "Question Answering",
+          "gold": "Question Answering",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "NLI": {
+          "pred": "Natural Language Inference",
+          "gold": "Natural Language Inference",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "GLUE": {
+          "pred": "General Language Understanding Evaluation",
+          "gold": "General Language Understanding Evaluation",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "SWAG": {
+          "pred": "Situations with Adversarial Generations",
+          "gold": "Situations with Adversarial Generations",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "NER": {
+          "pred": "Named Entity Recognition",
+          "gold": "Named Entity Recognition",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "MLM": {
+          "pred": "Masked Language Model",
+          "gold": "Masked Language Model",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "EMNLP": {
+          "pred": "Empirical Methods in Natural Language Processing",
+          "gold": "Empirical Methods in Natural Language Processing",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "NLP": {
+          "pred": "Natural Language Processing",
+          "gold": "Natural Language Processing",
+          "conf": "MEDIUM",
+          "source": "llm_rag"
+        },
+        "GPU": {
+          "pred": "Graphics Processing Unit",
+          "gold": "Graphics Processing Unit",
+          "conf": "MEDIUM",
+          "source": "llm_rag"
+        },
+        "SQuAD": {
+          "pred": "Stanford Question Answering Dataset",
+          "gold": "Stanford Question Answering Dataset",
+          "conf": "MEDIUM",
+          "source": "llm_rag"
+        },
+        "RACE": {
+          "pred": "Revised Acronym and Spell-Out Committee",
+          "gold": "Reading Comprehension from Examinations",
+          "conf": "MEDIUM",
+          "source": "llm_rag"
+        },
+        "CoNLL": {
+          "pred": "Common-Named-Entity Recognition",
+          "gold": "Conference on Natural Language Learning",
+          "conf": "MEDIUM",
+          "source": "llm_rag"
+        },
+        "MNLI": {
+          "pred": "Multi-Genre Natural Language Inference",
+          "gold": "Multi-Genre Natural Language Inference",
+          "conf": "MEDIUM",
+          "source": "llm_rag"
+        }
+      }
+    },
+    {
+      "condition": "GlossVis-Full",
+      "paper": "EfficientNet (ICML-19)",
+      "ema": 0.5,
+      "token_f1": 0.6770833333333333,
+      "detection": {
+        "precision": 0.125,
+        "recall": 1.0,
+        "f1": 0.2222222222222222,
+        "tp": 1,
+        "fp": 7,
+        "fn": 0
+      },
+      "ece": 0.20000000000000004,
+      "brier": 0.2575,
+      "latency_ms": 2473.3580239117146,
+      "results": {
+        "CAM": {
+          "pred": "Class Activation Map",
+          "gold": "Class Activation Map",
+          "conf": "HIGH",
+          "source": "regex"
+        },
+        "NAS": {
+          "pred": "Neural Architecture Search",
+          "gold": "Neural Architecture Search",
+          "conf": "MEDIUM",
+          "source": "llm_rag"
+        },
+        "CNN": {
+          "pred": "Convolutional Neural Network",
+          "gold": "Convolutional Neural Network",
+          "conf": "MEDIUM",
+          "source": "llm_rag"
+        },
+        "FLOPs": {
+          "pred": "Floating Point Operations",
+          "gold": "Floating Point Operations per Second",
+          "conf": "MEDIUM",
+          "source": "llm_rag"
+        },
+        "ReLU": {
+          "pred": "Rectified Linear Unit",
+          "gold": "Rectified Linear Unit",
+          "conf": "MEDIUM",
+          "source": "llm_rag"
+        },
+        "BN": {
+          "pred": "",
+          "gold": "Batch Normalization",
+          "conf": "MEDIUM",
+          "source": "llm_rag"
+        },
+        "SE": {
+          "pred": "Scanning Electron Microscope",
+          "gold": "Squeeze-and-Excitation",
+          "conf": "MEDIUM",
+          "source": "llm_rag"
+        },
+        "GPU": {
+          "pred": "Graphic Processing Unit",
+          "gold": "Graphics Processing Unit",
+          "conf": "MEDIUM",
+          "source": "llm_rag"
+        }
+      }
+    }
+  ],
+  "llm": [
+    {
+      "condition": "LLM-ZeroShot-qwen2.5:1.5b",
+      "paper": "TSGAN (AAAI-25)",
+      "model": "qwen2.5:1.5b",
+      "use_rag": false,
+      "ema": 0.058823529411764705,
+      "token_f1": 0.1913135883724119,
+      "latency_per_abbr_ms": 103.43209895140984,
+      "latency_total_ms": 1758.3456821739674,
+      "n_gt": 17,
+      "preds": {
+        "TSGAN": {
+          "pred": "Translational Systematic Genomic Analysis",
+          "gold": "Temporal Social Graph Attention Network"
+        },
+        "ASTAM": {
+          "pred": "Accelerated Stress Testing and Analysis Method",
+          "gold": "Adaptive Socio-temporal Attention Module"
+        },
+        "GNCE": {
+          "pred": "Geophysical and Natural Earthquake Engineering",
+          "gold": "Global Network Context Embedding"
+        },
+        "AGI": {
+          "pred": "Artificial General Intelligence",
+          "gold": "Aggression Intensity"
+        },
+        "BGRL": {
+          "pred": "Background and rationale investigation",
+          "gold": "Bootstrapped Graph Latents"
+        },
+        "SIA": {
+          "pred": "Specific Information About",
+          "gold": "Social Influence Attention"
+        },
+        "TDA": {
+          "pred": "Tensor Differential Analyzer",
+          "gold": "Temporal Dynamics Attention"
+        },
+        "IAG": {
+          "pred": "Inorganic Analysis Group",
+          "gold": "Integration Attention Gateway"
+        },
+        "CTA": {
+          "pred": "Contingency Table Analysis",
+          "gold": "Cross-temporal Attention"
+        },
+        "MAE": {
+          "pred": "Meaning Absolute Error",
+          "gold": "Mean Absolute Error"
+        },
+        "RMSE": {
+          "pred": "Root Mean Square Error",
+          "gold": "Root Mean Squared Error"
+        },
+        "SMPD": {
+          "pred": "Single-Molecule Polymerase Driven",
+          "gold": "Social Media Prediction Dataset"
+        },
+        "ACL": {
+          "pred": "Access Control List",
+          "gold": "Association for Computational Linguistics"
+        },
+        "ICLR": {
+          "pred": "Internet Conference and Computing - Large Scale Systems",
+          "gold": "International Conference on Learning Representations"
+        },
+        "IJCAI": {
+          "pred": "International Joint Conference on Artificial Intelligence",
+          "gold": "International Joint Conference on Artificial Intelligence"
+        },
+        "EMNLP": {
+          "pred": "Electron-Multiplying CCD-based Neuro Linguistic Processing",
+          "gold": "Empirical Methods in Natural Language Processing"
+        },
+        "IJSSCI": {
+          "pred": "International Journal of Scientific and Social Sciences Researchistringstream",
+          "gold": "International Journal of Software Science and Computational Intelligence"
+        }
+      }
+    },
+    {
+      "condition": "LLM-ZeroShot-qwen2.5:3b",
+      "paper": "TSGAN (AAAI-25)",
+      "model": "qwen2.5:3b",
+      "use_rag": false,
+      "ema": 0.17647058823529413,
+      "token_f1": 0.2650326797385621,
+      "latency_per_abbr_ms": 215.99095994058777,
+      "latency_total_ms": 3671.846318989992,
+      "n_gt": 17,
+      "preds": {
+        "TSGAN": {
+          "pred": "Total-Sum Generative Adversarial Network",
+          "gold": "Temporal Social Graph Attention Network"
+        },
+        "ASTAM": {
+          "pred": "Assessment and Statistics Analysis Method",
+          "gold": "Adaptive Socio-temporal Attention Module"
+        },
+        "GNCE": {
+          "pred": "Good Night and Clever Early",
+          "gold": "Global Network Context Embedding"
+        },
+        "AGI": {
+          "pred": "Advanced General Intelligence",
+          "gold": "Aggression Intensity"
+        },
+        "BGRL": {
+          "pred": "Background Research Literature",
+          "gold": "Bootstrapped Graph Latents"
+        },
+        "SIA": {
+          "pred": "Self-Image Analysis",
+          "gold": "Social Influence Attention"
+        },
+        "TDA": {
+          "pred": "Total Daily Average",
+          "gold": "Temporal Dynamics Attention"
+        },
+        "IAG": {
+          "pred": "Indian Agricultural Geography",
+          "gold": "Integration Attention Gateway"
+        },
+        "CTA": {
+          "pred": "Call to Action",
+          "gold": "Cross-temporal Attention"
+        },
+        "MAE": {
+          "pred": "Mean Absolute Error",
+          "gold": "Mean Absolute Error"
+        },
+        "RMSE": {
+          "pred": "Root Mean Square Error",
+          "gold": "Root Mean Squared Error"
+        },
+        "SMPD": {
+          "pred": "Scientific Paper Methodology",
+          "gold": "Social Media Prediction Dataset"
+        },
+        "ACL": {
+          "pred": "Access Control List",
+          "gold": "Association for Computational Linguistics"
+        },
+        "ICLR": {
+          "pred": "International Conference on Learning Representations",
+          "gold": "International Conference on Learning Representations"
+        },
+        "IJCAI": {
+          "pred": "International Joint Conference on Artificial Intelligence",
+          "gold": "International Joint Conference on Artificial Intelligence"
+        },
+        "EMNLP": {
+          "pred": "English and Mathematical Nominal Parsing Xiang Conference",
+          "gold": "Empirical Methods in Natural Language Processing"
+        },
+        "IJSSCI": {
+          "pred": "International Journal of Scientific and Innovative Studies",
+          "gold": "International Journal of Software Science and Computational Intelligence"
+        }
+      }
+    },
+    {
+      "condition": "LLM-ZeroShot-llama3.2:3b",
+      "paper": "TSGAN (AAAI-25)",
+      "model": "llama3.2:3b",
+      "use_rag": false,
+      "ema": 0.17647058823529413,
+      "token_f1": 0.2627005347593583,
+      "latency_per_abbr_ms": 231.4360211877262,
+      "latency_total_ms": 3934.412360191345,
+      "n_gt": 17,
+      "preds": {
+        "TSGAN": {
+          "pred": "Threshold Shift in Gamma Autocorrelation Amplitude",
+          "gold": "Temporal Social Graph Attention Network"
+        },
+        "ASTAM": {
+          "pred": "Abstract Section of Title and Author's Statement or Table",
+          "gold": "Adaptive Socio-temporal Attention Module"
+        },
+        "GNCE": {
+          "pred": "Generally Not Clearly Explained",
+          "gold": "Global Network Context Embedding"
+        },
+        "AGI": {
+          "pred": "Artificial General Intelligence",
+          "gold": "Aggression Intensity"
+        },
+        "BGRL": {
+          "pred": "Bilateral Gastrointestinal Robot-Like.",
+          "gold": "Bootstrapped Graph Latents"
+        },
+        "SIA": {
+          "pred": "Standard Industrial Average (for stock prices) or Scientific Instrumentation Application or Signal Intensity Analysis (depending on context)",
+          "gold": "Social Influence Attention"
+        },
+        "TDA": {
+          "pred": "Transdiagnostic approach",
+          "gold": "Temporal Dynamics Attention"
+        },
+        "IAG": {
+          "pred": "International Association of Geneticians",
+          "gold": "Integration Attention Gateway"
+        },
+        "CTA": {
+          "pred": "Call to Action.",
+          "gold": "Cross-temporal Attention"
+        },
+        "MAE": {
+          "pred": "Mean Absolute Error",
+          "gold": "Mean Absolute Error"
+        },
+        "RMSE": {
+          "pred": "Root Mean Square Error",
+          "gold": "Root Mean Squared Error"
+        },
+        "SMPD": {
+          "pred": "Single-Particle Dynamic Method.",
+          "gold": "Social Media Prediction Dataset"
+        },
+        "ACL": {
+          "pred": "Anterior Cruciate Ligament",
+          "gold": "Association for Computational Linguistics"
+        },
+        "ICLR": {
+          "pred": "International Conference on Learning Representations",
+          "gold": "International Conference on Learning Representations"
+        },
+        "IJCAI": {
+          "pred": "International Joint Conference on Artificial Intelligence",
+          "gold": "International Joint Conference on Artificial Intelligence"
+        },
+        "EMNLP": {
+          "pred": "Electronic Meeting of North American Chapter of the Association for Computational Linguistics and the Human Language Technologies Organization",
+          "gold": "Empirical Methods in Natural Language Processing"
+        },
+        "IJSSCI": {
+          "pred": "International Journal of Social Science and Comparative International Studies",
+          "gold": "International Journal of Software Science and Computational Intelligence"
+        }
+      }
+    },
+    {
+      "condition": "LLM-RAG-qwen2.5:1.5b",
+      "paper": "TSGAN (AAAI-25)",
+      "model": "qwen2.5:1.5b",
+      "use_rag": true,
+      "ema": 0.8823529411764706,
+      "token_f1": 0.968627450980392,
+      "latency_per_abbr_ms": 111.06265927938854,
+      "latency_total_ms": 1888.0652077496052,
+      "n_gt": 17,
+      "preds": {
+        "TSGAN": {
+          "pred": "Temporal Social Graph Attention Network",
+          "gold": "Temporal Social Graph Attention Network"
+        },
+        "ASTAM": {
+          "pred": "Adaptive Socio-Temporal Attention Module",
+          "gold": "Adaptive Socio-temporal Attention Module"
+        },
+        "GNCE": {
+          "pred": "Global Network Context Embedding",
+          "gold": "Global Network Context Embedding"
+        },
+        "AGI": {
+          "pred": "Aggression Intensity (AGI)",
+          "gold": "Aggression Intensity"
+        },
+        "BGRL": {
+          "pred": "Bootstrapped Graph Latents",
+          "gold": "Bootstrapped Graph Latents"
+        },
+        "SIA": {
+          "pred": "Social Influence Attention",
+          "gold": "Social Influence Attention"
+        },
+        "TDA": {
+          "pred": "Temporal Dynamics Attention",
+          "gold": "Temporal Dynamics Attention"
+        },
+        "IAG": {
+          "pred": "Integration Attention Gateway",
+          "gold": "Integration Attention Gateway"
+        },
+        "CTA": {
+          "pred": "Cross-Temporal Attention",
+          "gold": "Cross-temporal Attention"
+        },
+        "MAE": {
+          "pred": "Mean Absolute Error",
+          "gold": "Mean Absolute Error"
+        },
+        "RMSE": {
+          "pred": "Root Mean Squared Error",
+          "gold": "Root Mean Squared Error"
+        },
+        "SMPD": {
+          "pred": "Social Media Prediction Dataset",
+          "gold": "Social Media Prediction Dataset"
+        },
+        "ACL": {
+          "pred": "Association for Computational Linguistics",
+          "gold": "Association for Computational Linguistics"
+        },
+        "ICLR": {
+          "pred": "International Conference on Learning Representations",
+          "gold": "International Conference on Learning Representations"
+        },
+        "IJCAI": {
+          "pred": "International Joint Conference on Artificial Intelligence",
+          "gold": "International Joint Conference on Artificial Intelligence"
+        },
+        "EMNLP": {
+          "pred": "Proceedings of the 2014 Conference on Empirical Methods in Natural Language Processing",
+          "gold": "Empirical Methods in Natural Language Processing"
+        },
+        "IJSSCI": {
+          "pred": "International Journal of Software Science and Computational Intelligence",
+          "gold": "International Journal of Software Science and Computational Intelligence"
+        }
+      }
+    },
+    {
+      "condition": "LLM-RAG-qwen2.5:3b",
+      "paper": "TSGAN (AAAI-25)",
+      "model": "qwen2.5:3b",
+      "use_rag": true,
+      "ema": 0.9411764705882353,
+      "token_f1": 0.9852941176470589,
+      "latency_per_abbr_ms": 123.33250856574844,
+      "latency_total_ms": 2096.6526456177235,
+      "n_gt": 17,
+      "preds": {
+        "TSGAN": {
+          "pred": "Temporal Social Graph Attention Network",
+          "gold": "Temporal Social Graph Attention Network"
+        },
+        "ASTAM": {
+          "pred": "Adaptive Socio-Temporal Attention Module.",
+          "gold": "Adaptive Socio-temporal Attention Module"
+        },
+        "GNCE": {
+          "pred": "Global Network Context Embedding",
+          "gold": "Global Network Context Embedding"
+        },
+        "AGI": {
+          "pred": "Aggression Intensity",
+          "gold": "Aggression Intensity"
+        },
+        "BGRL": {
+          "pred": "Bootstrapped Graph Latents",
+          "gold": "Bootstrapped Graph Latents"
+        },
+        "SIA": {
+          "pred": "Social Influence Attention",
+          "gold": "Social Influence Attention"
+        },
+        "TDA": {
+          "pred": "Temporal Dynamics Attention",
+          "gold": "Temporal Dynamics Attention"
+        },
+        "IAG": {
+          "pred": "Integration Attention Gateway",
+          "gold": "Integration Attention Gateway"
+        },
+        "CTA": {
+          "pred": "Cross-temporal Attention",
+          "gold": "Cross-temporal Attention"
+        },
+        "MAE": {
+          "pred": "Mean Absolute Error",
+          "gold": "Mean Absolute Error"
+        },
+        "RMSE": {
+          "pred": "Root Mean Squared Error",
+          "gold": "Root Mean Squared Error"
+        },
+        "SMPD": {
+          "pred": "Social Media Prediction Dataset",
+          "gold": "Social Media Prediction Dataset"
+        },
+        "ACL": {
+          "pred": "Association for Computational Linguistics",
+          "gold": "Association for Computational Linguistics"
+        },
+        "ICLR": {
+          "pred": "International Conference on Learning Representations",
+          "gold": "International Conference on Learning Representations"
+        },
+        "IJCAI": {
+          "pred": "International Joint Conference on Artificial Intelligence",
+          "gold": "International Joint Conference on Artificial Intelligence"
+        },
+        "EMNLP": {
+          "pred": "Empirical Methods in Natural Language Processing",
+          "gold": "Empirical Methods in Natural Language Processing"
+        },
+        "IJSSCI": {
+          "pred": "International Journal of Software Science and Computational Intelligence",
+          "gold": "International Journal of Software Science and Computational Intelligence"
+        }
+      }
+    },
+    {
+      "condition": "LLM-RAG-qwen2.5:7b",
+      "paper": "TSGAN (AAAI-25)",
+      "model": "qwen2.5:7b",
+      "use_rag": true,
+      "ema": 1.0,
+      "token_f1": 1.0,
+      "latency_per_abbr_ms": 273.18734456511106,
+      "latency_total_ms": 4644.184857606888,
+      "n_gt": 17,
+      "preds": {
+        "TSGAN": {
+          "pred": "Temporal Social Graph Attention Network",
+          "gold": "Temporal Social Graph Attention Network"
+        },
+        "ASTAM": {
+          "pred": "Adaptive Socio-Temporal Attention Module",
+          "gold": "Adaptive Socio-temporal Attention Module"
+        },
+        "GNCE": {
+          "pred": "Global Network Context Embedding",
+          "gold": "Global Network Context Embedding"
+        },
+        "AGI": {
+          "pred": "Aggression Intensity",
+          "gold": "Aggression Intensity"
+        },
+        "BGRL": {
+          "pred": "Bootstrapped Graph Latents",
+          "gold": "Bootstrapped Graph Latents"
+        },
+        "SIA": {
+          "pred": "Social Influence Attention",
+          "gold": "Social Influence Attention"
+        },
+        "TDA": {
+          "pred": "Temporal Dynamics Attention",
+          "gold": "Temporal Dynamics Attention"
+        },
+        "IAG": {
+          "pred": "Integration Attention Gateway",
+          "gold": "Integration Attention Gateway"
+        },
+        "CTA": {
+          "pred": "Cross-temporal attention",
+          "gold": "Cross-temporal Attention"
+        },
+        "MAE": {
+          "pred": "Mean Absolute Error",
+          "gold": "Mean Absolute Error"
+        },
+        "RMSE": {
+          "pred": "Root Mean Squared Error",
+          "gold": "Root Mean Squared Error"
+        },
+        "SMPD": {
+          "pred": "Social Media Prediction Dataset",
+          "gold": "Social Media Prediction Dataset"
+        },
+        "ACL": {
+          "pred": "Association for Computational Linguistics",
+          "gold": "Association for Computational Linguistics"
+        },
+        "ICLR": {
+          "pred": "International Conference on Learning Representations",
+          "gold": "International Conference on Learning Representations"
+        },
+        "IJCAI": {
+          "pred": "International Joint Conference on Artificial Intelligence",
+          "gold": "International Joint Conference on Artificial Intelligence"
+        },
+        "EMNLP": {
+          "pred": "Empirical Methods in Natural Language Processing",
+          "gold": "Empirical Methods in Natural Language Processing"
+        },
+        "IJSSCI": {
+          "pred": "International Journal of Software Science and Computational Intelligence",
+          "gold": "International Journal of Software Science and Computational Intelligence"
+        }
+      }
+    },
+    {
+      "condition": "LLM-ZeroShot-qwen2.5:1.5b",
+      "paper": "BERT (NAACL-19)",
+      "model": "qwen2.5:1.5b",
+      "use_rag": false,
+      "ema": 0.375,
+      "token_f1": 0.4785714285714286,
+      "latency_per_abbr_ms": 97.86236472427845,
+      "latency_total_ms": 782.8989177942276,
+      "n_gt": 8,
+      "preds": {
+        "NSP": {
+          "pred": "Network-Switched Packet",
+          "gold": "Next Sentence Prediction"
+        },
+        "QA": {
+          "pred": "Quality Assurance",
+          "gold": "Question Answering"
+        },
+        "NLI": {
+          "pred": "Natural Language Inference",
+          "gold": "Natural Language Inference"
+        },
+        "GLUE": {
+          "pred": "General Language Understanding Evaluation",
+          "gold": "General Language Understanding Evaluation"
+        },
+        "SWAG": {
+          "pred": "Smart and whimsical approach",
+          "gold": "Situations with Adversarial Generations"
+        },
+        "NER": {
+          "pred": "Named Entity Recognition",
+          "gold": "Named Entity Recognition"
+        },
+        "MLM": {
+          "pred": "Multi-Layer Model",
+          "gold": "Masked Language Model"
+        },
+        "EMNLP": {
+          "pred": "Conference on Machine Learning and Natural Language Processing",
+          "gold": "Empirical Methods in Natural Language Processing"
+        }
+      }
+    },
+    {
+      "condition": "LLM-ZeroShot-qwen2.5:3b",
+      "paper": "BERT (NAACL-19)",
+      "model": "qwen2.5:3b",
+      "use_rag": false,
+      "ema": 0.375,
+      "token_f1": 0.45,
+      "latency_per_abbr_ms": 115.51903653889894,
+      "latency_total_ms": 924.1522923111916,
+      "n_gt": 8,
+      "preds": {
+        "NSP": {
+          "pred": "National Science Plan",
+          "gold": "Next Sentence Prediction"
+        },
+        "QA": {
+          "pred": "Quality Assurance",
+          "gold": "Question Answering"
+        },
+        "NLI": {
+          "pred": "Natural Language Inference",
+          "gold": "Natural Language Inference"
+        },
+        "GLUE": {
+          "pred": "General Language Understanding Evaluation",
+          "gold": "General Language Understanding Evaluation"
+        },
+        "SWAG": {
+          "pred": "Swag: Scientific Wild Ass Guessing",
+          "gold": "Situations with Adversarial Generations"
+        },
+        "NER": {
+          "pred": "Named Entity Recognition",
+          "gold": "Named Entity Recognition"
+        },
+        "MLM": {
+          "pred": "Multi-Level Marketing",
+          "gold": "Masked Language Model"
+        },
+        "EMNLP": {
+          "pred": "Eastern Massively Parallel Speech Summit and Conference on Empirical Methods in Natural Language Processing",
+          "gold": "Empirical Methods in Natural Language Processing"
+        }
+      }
+    },
+    {
+      "condition": "LLM-ZeroShot-llama3.2:3b",
+      "paper": "BERT (NAACL-19)",
+      "model": "llama3.2:3b",
+      "use_rag": false,
+      "ema": 0.125,
+      "token_f1": 0.24166666666666667,
+      "latency_per_abbr_ms": 107.91197279468179,
+      "latency_total_ms": 863.2957823574543,
+      "n_gt": 8,
+      "preds": {
+        "NSP": {
+          "pred": "Non-Specific",
+          "gold": "Next Sentence Prediction"
+        },
+        "QA": {
+          "pred": "Quality Assurance",
+          "gold": "Question Answering"
+        },
+        "NLI": {
+          "pred": "Non-linearly",
+          "gold": "Natural Language Inference"
+        },
+        "GLUE": {
+          "pred": "Global Land One Atmosphere Study",
+          "gold": "General Language Understanding Evaluation"
+        },
+        "SWAG": {
+          "pred": "Self-Organized Criticality of Aromatic Graphs.",
+          "gold": "Situations with Adversarial Generations"
+        },
+        "NER": {
+          "pred": "Named Entity Recognition",
+          "gold": "Named Entity Recognition"
+        },
+        "MLM": {
+          "pred": "Multiple Linear Model",
+          "gold": "Masked Language Model"
+        },
+        "EMNLP": {
+          "pred": "Embodied Natural Language Processing",
+          "gold": "Empirical Methods in Natural Language Processing"
+        }
+      }
+    },
+    {
+      "condition": "LLM-RAG-qwen2.5:1.5b",
+      "paper": "BERT (NAACL-19)",
+      "model": "qwen2.5:1.5b",
+      "use_rag": true,
+      "ema": 0.75,
+      "token_f1": 0.9404761904761905,
+      "latency_per_abbr_ms": 108.65922411903739,
+      "latency_total_ms": 869.2737929522991,
+      "n_gt": 8,
+      "preds": {
+        "NSP": {
+          "pred": "Next Sentence Prediction",
+          "gold": "Next Sentence Prediction"
+        },
+        "QA": {
+          "pred": "Question Answering",
+          "gold": "Question Answering"
+        },
+        "NLI": {
+          "pred": "Natural Language Inference (NLI)",
+          "gold": "Natural Language Inference"
+        },
+        "GLUE": {
+          "pred": "General Language Understanding Evaluation",
+          "gold": "General Language Understanding Evaluation"
+        },
+        "SWAG": {
+          "pred": "Situations With Adversarial Generations",
+          "gold": "Situations with Adversarial Generations"
+        },
+        "NER": {
+          "pred": "Named Entity Recognition",
+          "gold": "Named Entity Recognition"
+        },
+        "MLM": {
+          "pred": "Masked Language Modeling",
+          "gold": "Masked Language Model"
+        },
+        "EMNLP": {
+          "pred": "Empirical Methods in Natural Language Processing",
+          "gold": "Empirical Methods in Natural Language Processing"
+        }
+      }
+    },
+    {
+      "condition": "LLM-RAG-qwen2.5:3b",
+      "paper": "BERT (NAACL-19)",
+      "model": "qwen2.5:3b",
+      "use_rag": true,
+      "ema": 0.75,
+      "token_f1": 0.8854166666666666,
+      "latency_per_abbr_ms": 129.45291167125106,
+      "latency_total_ms": 1035.6232933700085,
+      "n_gt": 8,
+      "preds": {
+        "NSP": {
+          "pred": "Next Sentence Prediction",
+          "gold": "Next Sentence Prediction"
+        },
+        "QA": {
+          "pred": "Question Answering",
+          "gold": "Question Answering"
+        },
+        "NLI": {
+          "pred": "Natural Language Inference",
+          "gold": "Natural Language Inference"
+        },
+        "GLUE": {
+          "pred": "General Language Understanding Evaluation",
+          "gold": "General Language Understanding Evaluation"
+        },
+        "SWAG": {
+          "pred": "Situations With Adversarial Generations.",
+          "gold": "Situations with Adversarial Generations"
+        },
+        "NER": {
+          "pred": "Named Entity Recognition",
+          "gold": "Named Entity Recognition"
+        },
+        "MLM": {
+          "pred": "Machine Learning Model",
+          "gold": "Masked Language Model"
+        },
+        "EMNLP": {
+          "pred": "Empirical Methods in Natural Language Processing",
+          "gold": "Empirical Methods in Natural Language Processing"
+        }
+      }
+    },
+    {
+      "condition": "LLM-RAG-qwen2.5:7b",
+      "paper": "BERT (NAACL-19)",
+      "model": "qwen2.5:7b",
+      "use_rag": true,
+      "ema": 1.0,
+      "token_f1": 1.0,
+      "latency_per_abbr_ms": 142.20717642456293,
+      "latency_total_ms": 1137.6574113965034,
+      "n_gt": 8,
+      "preds": {
+        "NSP": {
+          "pred": "Next Sentence Prediction",
+          "gold": "Next Sentence Prediction"
+        },
+        "QA": {
+          "pred": "Question Answering",
+          "gold": "Question Answering"
+        },
+        "NLI": {
+          "pred": "Natural Language Inference",
+          "gold": "Natural Language Inference"
+        },
+        "GLUE": {
+          "pred": "General Language Understanding Evaluation",
+          "gold": "General Language Understanding Evaluation"
+        },
+        "SWAG": {
+          "pred": "Situations With Adversarial Generations",
+          "gold": "Situations with Adversarial Generations"
+        },
+        "NER": {
+          "pred": "Named Entity Recognition",
+          "gold": "Named Entity Recognition"
+        },
+        "MLM": {
+          "pred": "Masked Language Model",
+          "gold": "Masked Language Model"
+        },
+        "EMNLP": {
+          "pred": "Empirical Methods in Natural Language Processing",
+          "gold": "Empirical Methods in Natural Language Processing"
+        }
+      }
+    },
+    {
+      "condition": "LLM-ZeroShot-qwen2.5:1.5b",
+      "paper": "EfficientNet (ICML-19)",
+      "model": "qwen2.5:1.5b",
+      "use_rag": false,
+      "ema": 0.0,
+      "token_f1": 0.0,
+      "latency_per_abbr_ms": 114.92535099387169,
+      "latency_total_ms": 114.92535099387169,
+      "n_gt": 1,
+      "preds": {
+        "CAM": {
+          "pred": "Computer-Aided Manufacturing",
+          "gold": "Class Activation Map"
+        }
+      }
+    },
+    {
+      "condition": "LLM-ZeroShot-qwen2.5:3b",
+      "paper": "EfficientNet (ICML-19)",
+      "model": "qwen2.5:3b",
+      "use_rag": false,
+      "ema": 0.0,
+      "token_f1": 0.0,
+      "latency_per_abbr_ms": 108.8465005159378,
+      "latency_total_ms": 108.8465005159378,
+      "n_gt": 1,
+      "preds": {
+        "CAM": {
+          "pred": "Computer Aided Manufacturing",
+          "gold": "Class Activation Map"
+        }
+      }
+    },
+    {
+      "condition": "LLM-ZeroShot-llama3.2:3b",
+      "paper": "EfficientNet (ICML-19)",
+      "model": "llama3.2:3b",
+      "use_rag": false,
+      "ema": 0.0,
+      "token_f1": 0.0,
+      "latency_per_abbr_ms": 112.5769130885601,
+      "latency_total_ms": 112.5769130885601,
+      "n_gt": 1,
+      "preds": {
+        "CAM": {
+          "pred": "Controlled Atmosphere Manipulation",
+          "gold": "Class Activation Map"
+        }
+      }
+    },
+    {
+      "condition": "LLM-RAG-qwen2.5:1.5b",
+      "paper": "EfficientNet (ICML-19)",
+      "model": "qwen2.5:1.5b",
+      "use_rag": true,
+      "ema": 1.0,
+      "token_f1": 1.0,
+      "latency_per_abbr_ms": 96.3049866259098,
+      "latency_total_ms": 96.3049866259098,
+      "n_gt": 1,
+      "preds": {
+        "CAM": {
+          "pred": "Class Activation Map",
+          "gold": "Class Activation Map"
+        }
+      }
+    },
+    {
+      "condition": "LLM-RAG-qwen2.5:3b",
+      "paper": "EfficientNet (ICML-19)",
+      "model": "qwen2.5:3b",
+      "use_rag": true,
+      "ema": 1.0,
+      "token_f1": 1.0,
+      "latency_per_abbr_ms": 106.83941096067429,
+      "latency_total_ms": 106.83941096067429,
+      "n_gt": 1,
+      "preds": {
+        "CAM": {
+          "pred": "Class Activation Map",
+          "gold": "Class Activation Map"
+        }
+      }
+    },
+    {
+      "condition": "LLM-RAG-qwen2.5:7b",
+      "paper": "EfficientNet (ICML-19)",
+      "model": "qwen2.5:7b",
+      "use_rag": true,
+      "ema": 1.0,
+      "token_f1": 1.0,
+      "latency_per_abbr_ms": 121.08245119452477,
+      "latency_total_ms": 121.08245119452477,
+      "n_gt": 1,
+      "preds": {
+        "CAM": {
+          "pred": "Class Activation Map",
+          "gold": "Class Activation Map"
+        }
+      }
+    }
+  ],
+  "latency": [
+    {
+      "pages": 9,
+      "mean_ms": 102.99281179904938,
+      "std_ms": 0.2716197483358652,
+      "min_ms": 102.7880497276783,
+      "max_ms": 103.46940159797668,
+      "paper": "TSGAN (AAAI-25)"
+    },
+    {
+      "pages": 15,
+      "mean_ms": 109.63054150342941,
+      "std_ms": 0.5360781870691181,
+      "min_ms": 108.9291051030159,
+      "max_ms": 110.39341986179352,
+      "paper": "Transformer (NeurIPS-17)"
+    },
+    {
+      "pages": 16,
+      "mean_ms": 105.62857761979103,
+      "std_ms": 0.10318623586495976,
+      "min_ms": 105.49354925751686,
+      "max_ms": 105.76211288571358,
+      "paper": "BERT (NAACL-19)"
+    },
+    {
+      "pages": 22,
+      "mean_ms": 152.37549170851707,
+      "std_ms": 0.19245790692344447,
+      "min_ms": 152.17195823788643,
+      "max_ms": 152.6624895632267,
+      "paper": "ViT (ICLR-21)"
+    },
+    {
+      "pages": 12,
+      "mean_ms": 92.71766170859337,
+      "std_ms": 0.11435078897552253,
+      "min_ms": 92.59996935725212,
+      "max_ms": 92.8596667945385,
+      "paper": "ResNet (CVPR-16)"
+    },
+    {
+      "pages": 8,
+      "mean_ms": 35.06709188222885,
+      "std_ms": 0.05753437663895101,
+      "min_ms": 34.99367833137512,
+      "max_ms": 35.139720886945724,
+      "paper": "U-Net (MICCAI-15)"
+    },
+    {
+      "pages": 12,
+      "mean_ms": 186.29335761070251,
+      "std_ms": 0.07130091290786615,
+      "min_ms": 186.1901320517063,
+      "max_ms": 186.36112287640572,
+      "paper": "PPO (arXiv-17)"
+    },
+    {
+      "pages": 14,
+      "mean_ms": 109.29192751646042,
+      "std_ms": 0.15600480696892344,
+      "min_ms": 109.06066000461578,
+      "max_ms": 109.48074981570244,
+      "paper": "GCN (ICLR-17)"
+    },
+    {
+      "pages": 25,
+      "mean_ms": 117.18540862202644,
+      "std_ms": 0.10007074890972005,
+      "min_ms": 117.08414554595947,
+      "max_ms": 117.35348403453827,
+      "paper": "DDPM (NeurIPS-20)"
+    },
+    {
+      "pages": 14,
+      "mean_ms": 108.61429497599602,
+      "std_ms": 1.1912744208079393,
+      "min_ms": 107.83496499061584,
+      "max_ms": 110.71658506989479,
+      "paper": "Faster RCNN (NeurIPS-15)"
+    },
+    {
+      "pages": 14,
+      "mean_ms": 104.41695675253868,
+      "std_ms": 0.15567320375527074,
+      "min_ms": 104.17331010103226,
+      "max_ms": 104.58825901150703,
+      "paper": "Swin (ICCV-21)"
+    },
+    {
+      "pages": 11,
+      "mean_ms": 80.8160588145256,
+      "std_ms": 0.2165529670129232,
+      "min_ms": 80.62653243541718,
+      "max_ms": 81.07887208461761,
+      "paper": "EfficientNet (ICML-19)"
+    }
+  ],
+  "complexity_fit": {
+    "slope_ms_per_page": 3.255315898917615,
+    "intercept_ms": 62.09298715833575,
+    "r2": 0.19466633354061957
+  },
+  "mcnemar_regex_vs_llm_zs": {
+    "chi2": 12.071,
+    "p": "<0.05",
+    "sig": true
+  },
+  "bootstrap_ema_regex": {
+    "mean": 0.9548611111111112,
+    "ci95_lo": 0.8784722222222222,
+    "ci95_hi": 1.0
+  }
+}

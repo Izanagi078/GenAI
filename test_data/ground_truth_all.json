@@ -1,0 +1,261 @@
+{
+  "meta": {
+    "note": "Ground truth for GlossVis evaluation — IEEE VIS 2026. Two categories per paper: inline (regex-findable) and used_only (LLM-fallback territory).",
+    "domains": ["Social Computing","NLP/MT","NLP/LU","CV/Cls","CV/Det","Medical","RL","GNN","Generative","CV/Det2","CV/Hierarchical","CV/Efficient"]
+  },
+
+  "TSGAN (AAAI-25)": {
+    "domain": "Social Computing / Aggression Forecasting",
+    "pages": 9,
+    "inline": {
+      "TSGAN": "Temporal Social Graph Attention Network",
+      "ASTAM": "Adaptive Socio-temporal Attention Module",
+      "GNCE":  "Global Network Context Embedding",
+      "AGI":   "Aggression Intensity",
+      "BGRL":  "Bootstrapped Graph Latents",
+      "SIA":   "Social Influence Attention",
+      "TDA":   "Temporal Dynamics Attention",
+      "IAG":   "Integration Attention Gateway",
+      "CTA":   "Cross-temporal Attention",
+      "MAE":   "Mean Absolute Error",
+      "RMSE":  "Root Mean Squared Error",
+      "SMPD":  "Social Media Prediction Dataset",
+      "ACL":   "Association for Computational Linguistics",
+      "ICLR":  "International Conference on Learning Representations",
+      "IJCAI": "International Joint Conference on Artificial Intelligence",
+      "EMNLP": "Empirical Methods in Natural Language Processing",
+      "IJSSCI":"International Journal of Software Science and Computational Intelligence"
+    },
+    "used_only": {
+      "GNN":  "Graph Neural Network",
+      "LSTM": "Long Short-Term Memory",
+      "GRU":  "Gated Recurrent Unit",
+      "RNN":  "Recurrent Neural Network",
+      "GAN":  "Generative Adversarial Network",
+      "AAAI": "Association for the Advancement of Artificial Intelligence"
+    }
+  },
+
+  "Transformer (NeurIPS-17)": {
+    "domain": "Natural Language Processing / Machine Translation",
+    "pages": 15,
+    "inline": {
+      "WSJ":  "Wall Street Journal",
+      "ICLR": "International Conference on Learning Representations"
+    },
+    "used_only": {
+      "NLP":  "Natural Language Processing",
+      "BLEU": "Bilingual Evaluation Understudy",
+      "BPE":  "Byte Pair Encoding",
+      "RNN":  "Recurrent Neural Network",
+      "LSTM": "Long Short-Term Memory",
+      "GPU":  "Graphics Processing Unit",
+      "NMT":  "Neural Machine Translation"
+    }
+  },
+
+  "BERT (NAACL-19)": {
+    "domain": "Natural Language Processing / Language Understanding",
+    "pages": 16,
+    "inline": {
+      "NSP":  "Next Sentence Prediction",
+      "QA":   "Question Answering",
+      "NLI":  "Natural Language Inference",
+      "GLUE": "General Language Understanding Evaluation",
+      "SWAG": "Situations with Adversarial Generations",
+      "NER":  "Named Entity Recognition",
+      "MLM":  "Masked Language Model",
+      "EMNLP":"Empirical Methods in Natural Language Processing"
+    },
+    "used_only": {
+      "NLP":   "Natural Language Processing",
+      "GPU":   "Graphics Processing Unit",
+      "SQuAD": "Stanford Question Answering Dataset",
+      "RACE":  "Reading Comprehension from Examinations",
+      "CoNLL": "Conference on Natural Language Learning",
+      "MNLI":  "Multi-Genre Natural Language Inference"
+    }
+  },
+
+  "ViT (ICLR-21)": {
+    "domain": "Computer Vision / Image Classification",
+    "pages": 22,
+    "inline": {
+      "NLP":  "Natural Language Processing",
+      "VIT":  "Vision Transformer",
+      "MLP":  "Multi-layer Perceptron",
+      "MSA":  "Multihead Self-attention",
+      "GAP":  "Global Average Pooling",
+      "CVPR": "Computer Vision and Pattern Recognition"
+    },
+    "used_only": {
+      "CNN":   "Convolutional Neural Network",
+      "BERT":  "Bidirectional Encoder Representations from Transformers",
+      "CIFAR": "Canadian Institute for Advanced Research",
+      "JFT":   "Just-a-Fraction-of-the-Training-data"
+    }
+  },
+
+  "ResNet (CVPR-16)": {
+    "domain": "Computer Vision / Deep Residual Learning",
+    "pages": 12,
+    "inline": {
+      "BN":   "Batch Normalization",
+      "SGD":  "Stochastic Gradient Descent",
+      "NMS":  "Non-maximum Suppression",
+      "VOC":  "Visual Object Classes"
+    },
+    "used_only": {
+      "CNN":    "Convolutional Neural Network",
+      "ReLU":   "Rectified Linear Unit",
+      "RPN":    "Region Proposal Network",
+      "ILSVRC": "ImageNet Large Scale Visual Recognition Challenge",
+      "FC":     "Fully Connected"
+    }
+  },
+
+  "U-Net (MICCAI-15)": {
+    "domain": "Medical Image Segmentation",
+    "pages": 8,
+    "inline": {
+      "DIC":  "Differential Interference Contrast",
+      "VNC":  "Ventral Nerve Cord"
+    },
+    "used_only": {
+      "CNN":  "Convolutional Neural Network",
+      "GPU":  "Graphics Processing Unit",
+      "ReLU": "Rectified Linear Unit",
+      "FCN":  "Fully Convolutional Network",
+      "EM":   "Electron Microscopy",
+      "IoU":  "Intersection over Union"
+    }
+  },
+
+  "PPO (arXiv-17)": {
+    "domain": "Reinforcement Learning / Policy Optimization",
+    "pages": 12,
+    "inline": {
+      "PPO":  "Proximal Policy Optimization",
+      "TRPO": "Trust Region Policy Optimization",
+      "CEM":  "Cross-entropy Method",
+      "IROS": "Intelligent Robots and Systems"
+    },
+    "used_only": {
+      "RL":   "Reinforcement Learning",
+      "MDP":  "Markov Decision Process",
+      "KL":   "Kullback-Leibler",
+      "GAE":  "Generalized Advantage Estimation",
+      "A2C":  "Advantage Actor-Critic",
+      "LSTM": "Long Short-Term Memory"
+    }
+  },
+
+  "GCN (ICLR-17)": {
+    "domain": "Graph Neural Networks / Semi-supervised Learning",
+    "pages": 14,
+    "inline": {
+      "GCN":  "Graph Convolutional Network",
+      "ICA":  "Iterative Classification Algorithm",
+      "LP":   "Label Propagation",
+      "NIPS": "Neural Information Processing Systems",
+      "ICLR": "International Conference on Learning Representations",
+      "ICML": "International Conference on Machine Learning",
+      "JMLR": "Journal of Machine Learning Research",
+      "CVPR": "Computer Vision and Pattern Recognition"
+    },
+    "used_only": {
+      "CNN":  "Convolutional Neural Network",
+      "RNN":  "Recurrent Neural Network",
+      "GNN":  "Graph Neural Network",
+      "SGD":  "Stochastic Gradient Descent",
+      "NLP":  "Natural Language Processing"
+    }
+  },
+
+  "DDPM (NeurIPS-20)": {
+    "domain": "Generative Models / Denoising Diffusion",
+    "pages": 25,
+    "inline": {
+      "ECCV": "European Conference on Computer Vision",
+      "TFRC": "TensorFlow Research Cloud"
+    },
+    "used_only": {
+      "DDPM": "Denoising Diffusion Probabilistic Model",
+      "ELBO": "Evidence Lower Bound",
+      "FID":  "Frechet Inception Distance",
+      "IS":   "Inception Score",
+      "VAE":  "Variational Autoencoder",
+      "GAN":  "Generative Adversarial Network",
+      "MSE":  "Mean Squared Error"
+    }
+  },
+
+  "Faster RCNN (NeurIPS-15)": {
+    "domain": "Computer Vision / Object Detection",
+    "pages": 14,
+    "inline": {
+      "RPN":   "Region Proposal Network",
+      "FCN":   "Fully Convolutional Network",
+      "NMS":   "Non-maximum Suppression",
+      "SGD":   "Stochastic Gradient Descent",
+      "SS":    "Selective Search",
+      "TPAMI": "Transactions on Pattern Analysis and Machine Intelligence",
+      "NIPS":  "Neural Information Processing Systems",
+      "CVPR":  "Computer Vision and Pattern Recognition",
+      "ICCV":  "International Conference on Computer Vision",
+      "ECCV":  "European Conference on Computer Vision",
+      "ICML":  "International Conference on Machine Learning",
+      "ICLR":  "International Conference on Learning Representations",
+      "IJCV":  "International Journal of Computer Vision",
+      "BMVC":  "British Machine Vision Conference"
+    },
+    "used_only": {
+      "CNN":  "Convolutional Neural Network",
+      "RoI":  "Region of Interest",
+      "mAP":  "Mean Average Precision",
+      "GPU":  "Graphics Processing Unit",
+      "VOC":  "Visual Object Classes"
+    }
+  },
+
+  "Swin (ICCV-21)": {
+    "domain": "Computer Vision / Hierarchical Vision Transformer",
+    "pages": 14,
+    "inline": {
+      "EMA":  "Exponential Moving Average",
+      "FPN":  "Feature Pyramid Network",
+      "LN":   "Layer Normalization",
+      "MSA":  "Multi-head Self-Attention",
+      "NLP":  "Natural Language Processing",
+      "CVPR": "Computer Vision and Pattern Recognition",
+      "ECCV": "European Conference on Computer Vision",
+      "ICCV": "International Conference on Computer Vision"
+    },
+    "used_only": {
+      "MLP":   "Multi-Layer Perceptron",
+      "COCO":  "Common Objects in Context",
+      "ViT":   "Vision Transformer",
+      "CNN":   "Convolutional Neural Network",
+      "DeiT":  "Data-efficient Image Transformers",
+      "FLOPs": "Floating Point Operations per Second",
+      "GELU":  "Gaussian Error Linear Unit"
+    }
+  },
+
+  "EfficientNet (ICML-19)": {
+    "domain": "Computer Vision / Efficient Model Scaling",
+    "pages": 11,
+    "inline": {
+      "CAM":   "Class Activation Map"
+    },
+    "used_only": {
+      "NAS":   "Neural Architecture Search",
+      "CNN":   "Convolutional Neural Network",
+      "FLOPs": "Floating Point Operations per Second",
+      "ReLU":  "Rectified Linear Unit",
+      "BN":    "Batch Normalization",
+      "SE":    "Squeeze-and-Excitation",
+      "GPU":   "Graphics Processing Unit"
+    }
+  }
+}

@@ -14,6 +14,7 @@ except Exception:
 
 
 _NUMERIC_CITATION_PATTERN = re.compile(r'\[\s*(\d{1,3})\s*\]')
+_NUMERIC_CITATION_CLUSTER_PATTERN = re.compile(r'\[\s*(\d{1,3}(?:\s*,\s*\d{1,3})+)\s*\]')
 _AUTHOR_YEAR_ET_AL_PATTERN = re.compile(r'\b([A-Z][A-Za-z\'\-]+)\s+et al\.\s*\(\s*((?:19|20)\d{2}[a-z]?)\s*\)')
 _AUTHOR_YEAR_ET_AL_BRACKET_PATTERN = re.compile(r'\b([A-Z][A-Za-z\'\-]+)\s+et al\.\s*\[\s*((?:19|20)\d{2}[a-z]?)\s*\]')
 _AUTHOR_YEAR_BRACKET_GROUP_PATTERN = re.compile(r'\[([^\[\]]*(?:19|20)\d{2}[a-z]?[^\[\]]*)\]')
@@ -227,6 +228,27 @@ def find_references(doc: pymupdf.Document, progress_callback: Optional[callable]
                     pos = end
 
                 # find numeric bracket citations: [n]
+                for cluster_match in _NUMERIC_CITATION_CLUSTER_PATTERN.finditer(full_line_text):
+                    mstart = cluster_match.start()
+                    use_span = None
+                    for (s_start, s_end, s_obj) in cum:
+                        if s_start <= mstart < s_end:
+                            use_span = s_obj
+                            break
+                    if use_span is None and cum:
+                        use_span = cum[0][2]
+                    for num_str in re.split(r'\s*,\s*', cluster_match.group(1)):
+                        refs.append({
+                            "text": f"[{num_str.strip()}]",
+                            "number": int(num_str.strip()),
+                            "format_type": "NUMERIC_BRACKET",
+                            "page": page_idx,
+                            "column": column,
+                            "block": block_idx,
+                            "line": line_idx,
+                            "bbox": use_span.get("bbox"),
+                        })
+
                 for match in _NUMERIC_CITATION_PATTERN.finditer(full_line_text):
                     mstart = match.start()
                     # find the span that contains the start of the match (fallback to first span)
@@ -381,29 +403,37 @@ def find_abbreviations(doc: pymupdf.Document, progress_callback: Optional[callab
     pattern = r'\b[A-Z]{3,5}\b'
     abbs = []
     num_pages = len(doc)
+    ref_start_page = _find_references_start_page(doc)
 
     for page_idx, page in enumerate(doc):
         if progress_callback:
             progress_callback(page_idx, num_pages)
-        # Extract text blocks with detailed structural information
+
+        if ref_start_page is not None and page_idx >= ref_start_page:
+            continue
+
         blocks = page.get_text("dict")["blocks"]
         page_width = page.rect.width
+        page_height = page.rect.height
 
         for block_idx, block in enumerate(blocks):
             if "lines" not in block:
                 continue
 
-            # Determine if the block is in the left (1) or right (2) column
+            block_y0 = block["bbox"][1]
+            block_y1 = block["bbox"][3]
+            if block_y0 < 30 or block_y1 > page_height - 30:
+                continue
+
             block_center = (block["bbox"][0] + block["bbox"][2]) / 2
             column = 1 if block_center < page_width / 2 else 2
+            block_text = "".join(span["text"] for line in block["lines"] for span in line["spans"])
 
             for line_idx, line in enumerate(block["lines"]):
                 for span in line["spans"]:
                     text = span["text"]
-                    # Find all occurrences of the abbreviation pattern in the span's text
                     matches = list(re.finditer(pattern, text))
 
-                    # For each match, create a dictionary with its details
                     for match in matches:
                             abbs.append({
                                 "text": match.group(0),
@@ -412,6 +442,7 @@ def find_abbreviations(doc: pymupdf.Document, progress_callback: Optional[callab
                                 "block": block_idx,
                                 "line": line_idx,
                                 "bbox": span["bbox"],
+                                "context": block_text,
                             })
 
     return abbs
@@ -485,6 +516,21 @@ def find_symbols(doc: pymupdf.Document, progress_callback: Optional[callable] = 
             column = 1 if block_center < page_width / 2 else 2
             
             block_text = "".join(span["text"] for line in block["lines"] for span in line["spans"])
+            
+            def _get_symbol_context(text: str, index: int, word_margin: int = 100) -> str:
+                if index < 0:
+                    return text[:1200]
+                
+                before = text[:index]
+                after = text[index:]
+                
+                words_before = before.split()
+                words_after = after.split()
+                
+                selected_before = " ".join(words_before[-word_margin:])
+                selected_after = " ".join(words_after[:word_margin])
+                
+                return (selected_before + " " + selected_after).strip()
 
             words = [w for w in block_text.split() if w.isalpha()]
             is_equation = False
@@ -523,21 +569,16 @@ def find_symbols(doc: pymupdf.Document, progress_callback: Optional[callable] = 
                         latex_text = latex_ocr_model(img)
                         found_latex_symbols = latex_symbol_pattern.findall(latex_text)
                         for sys_match in set(found_latex_symbols):
-                            # Skip if purely alphanumeric and single char (these are often variables)
                             if len(sys_match) == 1 and sys_match.isalpha():
                                 continue
                             if sys_match in _LATEX_NON_SYMBOLS or sys_match in _COMMON_SYMBOLS:
                                 continue
                             
                             cmd_name = sys_match[1:] if sys_match.startswith('\\') else sys_match
-                            
-                            # Filter compound OCR artifacts (e.g. \quadRichard, \uniliedevaluation)
                             if len(cmd_name) > 15:
                                 continue
-                            # Filter artifacts containing non-standard chars like closing brackets
                             if any(c in sys_match for c in ')]}>'):
                                 continue
-                            # Filter OCR artifacts of capitalized words that aren't Greek capitals
                             if sys_match.startswith('\\') and cmd_name[:1].isupper() and sys_match not in _VALID_UPPERCASE_LATEX:
                                 continue
                             
@@ -547,12 +588,13 @@ def find_symbols(doc: pymupdf.Document, progress_callback: Optional[callable] = 
                                 "column": column,
                                 "block": block_idx,
                                 "bbox": block["bbox"],
-                                "context": block_text[:400],
+                                "context": _get_symbol_context(block_text, block_text.find(sys_match)),
                                 "source": "ocr"
                             })
                     except Exception as e:
                         pass
 
+            current_offset = 0
             for line_idx, line in enumerate(block["lines"]):
                 for span in line["spans"]:
                     text = span["text"]
@@ -569,8 +611,9 @@ def find_symbols(doc: pymupdf.Document, progress_callback: Optional[callable] = 
                                     "block": block_idx,
                                     "line": line_idx,
                                     "bbox": span["bbox"],
-                                    "context": block_text[:400],
+                                    "context": _get_symbol_context(block_text, current_offset + match.start()),
                                     "source": "unicode"
                                 })
+                    current_offset += len(text)
 
     return symbols

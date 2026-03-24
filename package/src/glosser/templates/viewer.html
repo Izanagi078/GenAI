@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GlossVis Interactive Viewer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .header {
+            background: #1a1a2e;
+            color: white;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+        .header h1 { font-size: 18px; font-weight: 600; letter-spacing: 0.3px; }
+        .header .subtitle { font-size: 12px; opacity: 0.65; margin-top: 2px; }
+        .header-stats { display: flex; gap: 16px; align-items: center; }
+        .hstat { text-align: center; }
+        .hstat-val { font-size: 18px; font-weight: 700; }
+        .hstat-lab { font-size: 10px; opacity: 0.65; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .layout {
+            display: flex;
+            height: calc(100vh - 54px);
+        }
+
+        /* ── Paper Selector Panel ── */
+        .paper-panel {
+            width: 180px;
+            min-width: 180px;
+            background: #1e2235;
+            color: #ccc;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-right: 1px solid #111;
+        }
+        .paper-panel-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #888;
+            padding: 12px 12px 6px;
+        }
+        .paper-search {
+            margin: 0 10px 8px;
+            padding: 5px 8px;
+            border-radius: 4px;
+            border: 1px solid #333;
+            background: #141624;
+            color: #ccc;
+            font-size: 12px;
+            outline: none;
+            width: calc(100% - 20px);
+        }
+        .paper-search::placeholder { color: #555; }
+        .paper-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 6px 8px;
+        }
+        .paper-list::-webkit-scrollbar { width: 4px; }
+        .paper-list::-webkit-scrollbar-track { background: transparent; }
+        .paper-list::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        .paper-item {
+            padding: 7px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #aaa;
+            transition: background 0.12s, color 0.12s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .paper-item:hover { background: #2a2f47; color: #eee; }
+        .paper-item.active {
+            background: #2e3a6e;
+            color: #fff;
+            font-weight: 600;
+        }
+        .paper-item .paper-num {
+            font-size: 11px;
+            opacity: 0.55;
+            min-width: 22px;
+        }
+        .paper-count-badge {
+            font-size: 10px;
+            padding: 1px 5px;
+            background: #2e3a6e;
+            border-radius: 8px;
+            color: #8899dd;
+            margin-left: auto;
+        }
+
+        /* ── Annotation Sidebar ── */
+        .sidebar {
+            width: 300px;
+            min-width: 300px;
+            background: white;
+            border-right: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-controls {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            flex-shrink: 0;
+        }
+
+        .section-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #888;
+            margin-bottom: 8px;
+            margin-top: 12px;
+        }
+        .section-title:first-child { margin-top: 0; }
+
+        .layer-toggle {
+            display: flex;
+            align-items: center;
+            padding: 5px 8px;
+            border-radius: 5px;
+            margin-bottom: 3px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .layer-toggle:hover { background: #f5f5f5; }
+        .layer-toggle input { margin-right: 8px; cursor: pointer; }
+        .layer-toggle label { flex: 1; font-size: 13px; cursor: pointer; }
+        .layer-count {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 1px 7px;
+            border-radius: 10px;
+        }
+        .lc-citation  { background: #e8f4fd; color: #1565c0; }
+        .lc-abbr      { background: #e8f5e9; color: #2e7d32; }
+        .lc-symbol    { background: #fff3e0; color: #e65100; }
+
+        .conf-row { display: flex; gap: 5px; margin-top: 6px; }
+        .conf-btn {
+            flex: 1;
+            padding: 5px 0;
+            border: 1.5px solid #ddd;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            background: white;
+            transition: all 0.15s;
+        }
+        .conf-btn.active-all    { border-color: #555; background: #555; color: white; }
+        .conf-btn.active-high   { border-color: #007700; background: #007700; color: white; }
+        .conf-btn.active-medium { border-color: #b35a00; background: #b35a00; color: white; }
+        .conf-btn:not(.active-all):not(.active-high):not(.active-medium) { color: #666; }
+
+        .search-input {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 13px;
+            margin-top: 6px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .search-input:focus { border-color: #1a1a2e; }
+
+        .ann-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 10px;
+        }
+        .ann-item {
+            padding: 8px 10px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            border-left: 3px solid #ccc;
+            background: #fafafa;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .ann-item:hover {
+            background: #f0f4ff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            transform: translateX(2px);
+        }
+        .ann-item.conf-HIGH   { border-left-color: #007700; }
+        .ann-item.conf-MEDIUM { border-left-color: #b35a00; }
+        .ann-item.conf-LOW    { border-left-color: #8c0000; }
+
+        .ann-term {
+            font-weight: 600;
+            font-size: 13px;
+            color: #222;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ann-term .conf-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+        .conf-dot-HIGH   { background: #007700; }
+        .conf-dot-MEDIUM { background: #b35a00; }
+        .conf-dot-LOW    { background: #8c0000; }
+
+        .ann-def  { font-size: 11px; color: #666; margin-top: 3px; line-height: 1.4; }
+        .ann-meta { font-size: 10px; color: #aaa; margin-top: 3px; }
+
+        .empty-msg { padding: 30px 20px; text-align: center; color: #bbb; font-size: 13px; }
+
+        /* ── PDF viewer ── */
+        .pdf-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        .pdf-toolbar {
+            background: #2c2c2c;
+            color: white;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        .pdf-toolbar button {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.15s;
+        }
+        .pdf-toolbar button:hover { background: #666; }
+        .pdf-toolbar button:disabled { opacity: 0.35; cursor: default; }
+        .page-info { font-size: 13px; min-width: 90px; text-align: center; }
+        .zoom-btn { padding: 4px 10px !important; font-size: 16px !important; }
+        .current-paper-label {
+            margin-left: auto;
+            font-size: 12px;
+            opacity: 0.6;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 160px;
+        }
+
+        .pdf-scroll {
+            flex: 1;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            padding: 16px;
+            background: #555;
+        }
+        #pdf-canvas { box-shadow: 0 4px 20px rgba(0,0,0,0.5); display: block; }
+
+        .legend {
+            background: white;
+            border-top: 1px solid #ddd;
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+        .legend-title { font-size: 11px; font-weight: 600; color: #888; margin-right: 4px; }
+        .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #555; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+        /* Loading overlay */
+        #loading-overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(85,85,85,0.6);
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        #loading-overlay.visible { display: flex; }
+        .spinner {
+            width: 36px; height: 36px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div>
+            <h1>GlossVis Interactive Viewer</h1>
+            <div class="subtitle">{{ paper_count }} annotated paper{% if paper_count != 1 %}s{% endif %} loaded</div>
+        </div>
+        <div class="header-stats">
+            <div class="hstat">
+                <div class="hstat-val" id="hstat-total">—</div>
+                <div class="hstat-lab">Annotations</div>
+            </div>
+            <div class="hstat">
+                <div class="hstat-val" id="hstat-cit">—</div>
+                <div class="hstat-lab">Citations</div>
+            </div>
+            <div class="hstat">
+                <div class="hstat-val" id="hstat-abb">—</div>
+                <div class="hstat-lab">Abbrevs</div>
+            </div>
+            <div class="hstat">
+                <div class="hstat-val" id="hstat-sym">—</div>
+                <div class="hstat-lab">Symbols</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="layout">
+
+        <!-- Paper selector panel -->
+        <div class="paper-panel">
+            <div class="paper-panel-title">Papers</div>
+            <input type="text" class="paper-search" id="paper-search" placeholder="Filter…">
+            <div class="paper-list" id="paper-list">
+                <div class="empty-msg" style="color:#555;font-size:12px;">Loading…</div>
+            </div>
+        </div>
+
+        <!-- Annotation sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-controls">
+
+                <div class="section-title">Layers</div>
+                <div class="layer-toggle">
+                    <input type="checkbox" id="show-citations" checked>
+                    <label for="show-citations">Citations</label>
+                    <span class="layer-count lc-citation" id="cnt-citations">0</span>
+                </div>
+                <div class="layer-toggle">
+                    <input type="checkbox" id="show-abbreviations" checked>
+                    <label for="show-abbreviations">Abbreviations</label>
+                    <span class="layer-count lc-abbr" id="cnt-abbreviations">0</span>
+                </div>
+                <div class="layer-toggle">
+                    <input type="checkbox" id="show-symbols" checked>
+                    <label for="show-symbols">Symbols</label>
+                    <span class="layer-count lc-symbol" id="cnt-symbols">0</span>
+                </div>
+
+                <div class="section-title">Confidence Filter</div>
+                <div class="conf-row">
+                    <button class="conf-btn active-all" data-level="ALL">All</button>
+                    <button class="conf-btn" data-level="HIGH" style="color:#007700;">● High</button>
+                    <button class="conf-btn" data-level="MEDIUM" style="color:#b35a00;">≈ Med</button>
+                </div>
+
+                <div class="section-title">Search</div>
+                <input type="text" class="search-input" id="search-input" placeholder="Term or definition…">
+            </div>
+
+            <div class="ann-list" id="ann-list">
+                <div class="empty-msg">Select a paper to begin.</div>
+            </div>
+        </div>
+
+        <!-- PDF viewer -->
+        <div class="pdf-area" style="position:relative;">
+            <div id="loading-overlay">
+                <div class="spinner"></div>
+            </div>
+            <div class="pdf-toolbar">
+                <button id="btn-prev" onclick="changePage(-1)" disabled>&#8592; Prev</button>
+                <span class="page-info" id="page-info">Page — / —</span>
+                <button id="btn-next" onclick="changePage(1)" disabled>Next &#8594;</button>
+                <button class="zoom-btn" onclick="zoom(-0.25)">−</button>
+                <span id="zoom-label" style="font-size:12px;min-width:42px;text-align:center;">150%</span>
+                <button class="zoom-btn" onclick="zoom(+0.25)">+</button>
+                <span class="current-paper-label" id="current-paper-label">No paper selected</span>
+            </div>
+            <div class="pdf-scroll">
+                <canvas id="pdf-canvas"></canvas>
+            </div>
+            <div class="legend">
+                <span class="legend-title">Confidence:</span>
+                <div class="legend-item"><div class="legend-dot" style="background:#007700"></div> Extracted from paper</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#b35a00"></div> ≈ LLM-inferred</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#8c0000"></div> ? Uncertain</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // ── State ──────────────────────────────────────────────────────────────
+        let pdfDoc        = null;
+        let currentPage   = 1;
+        let totalPages    = 1;
+        let scale         = 1.5;
+        let allAnnotations = { citations: [], abbreviations: [], symbols: [] };
+        let activeConfFilter = 'ALL';
+        let currentStem   = '';
+        let allPapers     = [];     // [{filename, stem}]
+
+        // ── Helpers ────────────────────────────────────────────────────────────
+        function showLoading(on) {
+            document.getElementById('loading-overlay').classList.toggle('visible', on);
+        }
+
+        // ── Paper list ─────────────────────────────────────────────────────────
+        async function loadPaperList() {
+            try {
+                const r = await fetch('/api/papers');
+                allPapers = await r.json();
+                renderPaperList(allPapers);
+                if (allPapers.length > 0) {
+                    const initial = '{{ initial_pdf }}';
+                    const match = allPapers.find(p => p.filename === initial) || allPapers[0];
+                    selectPaper(match.stem, match.filename);
+                }
+            } catch (e) {
+                document.getElementById('paper-list').innerHTML =
+                    '<div class="empty-msg" style="color:#c55">Could not load paper list.</div>';
+            }
+        }
+
+        function renderPaperList(papers) {
+            const list = document.getElementById('paper-list');
+            list.innerHTML = '';
+            papers.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'paper-item' + (p.stem === currentStem ? ' active' : '');
+                item.dataset.stem = p.stem;
+                item.dataset.filename = p.filename;
+                item.innerHTML = `<span class="paper-num">${p.stem}</span><span>${p.filename}</span>`;
+                item.addEventListener('click', () => selectPaper(p.stem, p.filename));
+                list.appendChild(item);
+            });
+        }
+
+        document.getElementById('paper-search').addEventListener('input', e => {
+            const q = e.target.value.toLowerCase();
+            const filtered = q ? allPapers.filter(p => p.filename.toLowerCase().includes(q) || p.stem.includes(q)) : allPapers;
+            renderPaperList(filtered);
+        });
+
+        // ── Paper switching ────────────────────────────────────────────────────
+        async function selectPaper(stem, filename) {
+            if (stem === currentStem) return;
+            currentStem = stem;
+
+            // Highlight active item
+            document.querySelectorAll('.paper-item').forEach(el => {
+                el.classList.toggle('active', el.dataset.stem === stem);
+            });
+            document.getElementById('current-paper-label').textContent = filename;
+
+            showLoading(true);
+            // Load both PDF and annotations in parallel
+            await Promise.all([loadPDF(filename), loadAnnotations(stem)]);
+            showLoading(false);
+        }
+
+        // ── PDF loading ────────────────────────────────────────────────────────
+        async function loadPDF(filename) {
+            try {
+                pdfDoc = await pdfjsLib.getDocument(`/pdf/${encodeURIComponent(filename)}`).promise;
+                totalPages = pdfDoc.numPages;
+                currentPage = 1;
+                document.getElementById('btn-next').disabled = totalPages <= 1;
+                document.getElementById('btn-prev').disabled = true;
+                renderPage(currentPage);
+            } catch (e) {
+                console.error('PDF load failed:', e);
+            }
+        }
+
+        async function renderPage(num) {
+            if (!pdfDoc) return;
+            currentPage = Math.max(1, Math.min(num, totalPages));
+            document.getElementById('page-info').textContent = `Page ${currentPage} / ${totalPages}`;
+            document.getElementById('btn-prev').disabled = currentPage <= 1;
+            document.getElementById('btn-next').disabled = currentPage >= totalPages;
+            document.getElementById('zoom-label').textContent = Math.round(scale * 100) + '%';
+
+            const page = await pdfDoc.getPage(currentPage);
+            const vp   = page.getViewport({ scale });
+            const canvas = document.getElementById('pdf-canvas');
+            canvas.height = vp.height;
+            canvas.width  = vp.width;
+            await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+        }
+
+        function changePage(delta) { renderPage(currentPage + delta); }
+        function zoom(delta) {
+            scale = Math.max(0.5, Math.min(3.0, scale + delta));
+            renderPage(currentPage);
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changePage(1);
+            if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changePage(-1);
+        });
+
+        // ── Annotations ────────────────────────────────────────────────────────
+        async function loadAnnotations(stem) {
+            try {
+                const r = await fetch(`/api/annotations?paper=${encodeURIComponent(stem)}`);
+                const data = await r.json();
+                allAnnotations = data;
+
+                const stats = data.stats || {};
+                document.getElementById('hstat-total').textContent = stats.total_annotations ?? '—';
+                document.getElementById('hstat-cit').textContent   = stats.total_citations ?? '—';
+                document.getElementById('hstat-abb').textContent   = stats.total_abbreviations ?? '—';
+                document.getElementById('hstat-sym').textContent   = stats.total_symbols ?? '—';
+                document.getElementById('cnt-citations').textContent    = stats.total_citations ?? 0;
+                document.getElementById('cnt-abbreviations').textContent = stats.total_abbreviations ?? 0;
+                document.getElementById('cnt-symbols').textContent      = stats.total_symbols ?? 0;
+
+                renderList();
+            } catch (e) {
+                document.getElementById('ann-list').innerHTML =
+                    '<div class="empty-msg">Could not load annotations.</div>';
+            }
+        }
+
+        const CONF_ORDER = { HIGH: 3, MEDIUM: 2, LOW: 1 };
+
+        function matchesFilter(ann) {
+            const annLevel = CONF_ORDER[ann.confidence || 'MEDIUM'] || 2;
+            if (activeConfFilter === 'HIGH'   && annLevel < 3) return false;
+            if (activeConfFilter === 'MEDIUM' && annLevel < 2) return false;
+            const q = document.getElementById('search-input').value.trim().toLowerCase();
+            if (q) {
+                const text = (ann.text || '').toLowerCase();
+                const def  = (ann.definition || ann.meaning || '').toLowerCase();
+                if (!text.includes(q) && !def.includes(q)) return false;
+            }
+            return true;
+        }
+
+        function renderList() {
+            const showCit = document.getElementById('show-citations').checked;
+            const showAbb = document.getElementById('show-abbreviations').checked;
+            const showSym = document.getElementById('show-symbols').checked;
+
+            const items = [];
+            if (showCit) allAnnotations.citations.forEach(a => items.push({ ...a, _type: 'citation' }));
+            if (showAbb) allAnnotations.abbreviations.forEach(a => items.push({ ...a, _type: 'abbreviation' }));
+            if (showSym) allAnnotations.symbols.forEach(a => items.push({ ...a, _type: 'symbol' }));
+
+            const filtered = items.filter(matchesFilter);
+            filtered.sort((a, b) => a.page - b.page || (CONF_ORDER[b.confidence] || 2) - (CONF_ORDER[a.confidence] || 2));
+
+            const list = document.getElementById('ann-list');
+            if (filtered.length === 0) {
+                list.innerHTML = currentStem
+                    ? '<div class="empty-msg">No annotations match filters.</div>'
+                    : '<div class="empty-msg">Select a paper to begin.</div>';
+                document.getElementById('hstat-total').textContent = '0';
+                return;
+            }
+
+            document.getElementById('hstat-total').textContent = filtered.length;
+            list.innerHTML = '';
+            filtered.forEach(ann => list.appendChild(buildItem(ann)));
+        }
+
+        function buildItem(ann) {
+            const conf = ann.confidence || 'MEDIUM';
+            const div  = document.createElement('div');
+            div.className = `ann-item conf-${conf}`;
+
+            const termRow = document.createElement('div');
+            termRow.className = 'ann-term';
+            const dot = document.createElement('span');
+            dot.className = `conf-dot conf-dot-${conf}`;
+            termRow.appendChild(dot);
+            termRow.appendChild(document.createTextNode(ann.text || '—'));
+
+            const defDiv = document.createElement('div');
+            defDiv.className = 'ann-def';
+            defDiv.textContent = ann.definition || ann.meaning || '';
+
+            const metaDiv = document.createElement('div');
+            metaDiv.className = 'ann-meta';
+            const typeLabel = { citation: 'Citation', abbreviation: 'Abbreviation', symbol: 'Symbol' }[ann._type] || '';
+            metaDiv.textContent = `p.${(ann.page || 0) + 1}  ·  ${typeLabel}  ·  ${conf}`;
+
+            div.appendChild(termRow);
+            div.appendChild(defDiv);
+            div.appendChild(metaDiv);
+            div.addEventListener('click', () => renderPage((ann.page || 0) + 1));
+            return div;
+        }
+
+        // ── Controls ───────────────────────────────────────────────────────────
+        document.querySelectorAll('.conf-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.conf-btn').forEach(b =>
+                    b.classList.remove('active-all', 'active-high', 'active-medium'));
+                const lvl = btn.dataset.level;
+                activeConfFilter = lvl;
+                if (lvl === 'ALL')    btn.classList.add('active-all');
+                if (lvl === 'HIGH')   btn.classList.add('active-high');
+                if (lvl === 'MEDIUM') btn.classList.add('active-medium');
+                renderList();
+            });
+        });
+
+        document.getElementById('show-citations').addEventListener('change', renderList);
+        document.getElementById('show-abbreviations').addEventListener('change', renderList);
+        document.getElementById('show-symbols').addEventListener('change', renderList);
+        document.getElementById('search-input').addEventListener('input', renderList);
+
+        // ── Init ───────────────────────────────────────────────────────────────
+        loadPaperList();
+    </script>
+</body>
+</html>
